@@ -138,7 +138,11 @@ export default function Professores() {
               <tr key={prof.id}>
                 <td>{prof.nome}</td>
                 <td>{prof.username}</td>
-                <td>{prof.turma_professor?.[0]?.turmas?.nome || 'Sem turma'}</td>
+                <td>
+                    {prof.turma_professor?.length > 0
+                      ? prof.turma_professor.map(tp => tp.turmas?.nome).join(', ')
+                     : 'Sem turma'}
+                </td>
                 <td>
                   <button onClick={() => apagarProfessor(prof.id)}>Apagar</button>
                 </td>
