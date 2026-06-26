@@ -9,6 +9,7 @@ import Alunos from './pages/admin/Alunos'
 import Conteudos from './pages/admin/Conteudos'
 import ProfessorHome from './pages/professor/ProfessorHome'
 import AlunoHome from './pages/aluno/AlunoHome'
+import EditarConteudo from './pages/admin/EditarConteudo'
 
 function App() {
   const [sessao, setSessao] = useState(undefined)
@@ -47,6 +48,7 @@ function App() {
       <Route path="/admin/professores" element={usuario.tipo === 'admin' ? <Professores /> : <Navigate to="/" />} />
       <Route path="/admin/alunos" element={usuario.tipo === 'admin' ? <Alunos /> : <Navigate to="/" />} />
       <Route path="/admin/conteudos" element={usuario.tipo === 'admin' ? <Conteudos /> : <Navigate to="/" />} />
+      <Route path="/admin/conteudos/:id" element={usuario.tipo === 'admin' ? <EditarConteudo /> : <Navigate to="/" />} />
       <Route path="/professor" element={usuario.tipo === 'professor' ? <ProfessorHome /> : <Navigate to="/" />} />
       <Route path="/aluno" element={usuario.tipo === 'aluno' ? <AlunoHome /> : <Navigate to="/" />} />
       <Route path="*" element={
