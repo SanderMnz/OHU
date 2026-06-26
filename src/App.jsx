@@ -11,25 +11,19 @@ import ProfessorHome from './pages/professor/ProfessorHome'
 import AlunoHome from './pages/aluno/AlunoHome'
 
 function App() {
-  const [sessao, setSessao] = useState(null)
+  const [sessao, setSessao] = useState(undefined)
   const [usuario, setUsuario] = useState(null)
-  const [carregando, setCarregando] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSessao(session)
-      if (session) buscarUsuario(session.user.id)
-      else setCarregando(false)
-    })
-
-    supabase.auth.onAuthStateChange((_event, session) => {
-      setSessao(session)
-      if (session) buscarUsuario(session.user.id)
-      else {
+      if (session) {
+        buscarUsuario(session.user.id)
+      } else {
         setUsuario(null)
-        setCarregando(false)
       }
     })
+    return () => subscription.unsubscribe()
   }, [])
 
   async function buscarUsuario(id) {
@@ -39,25 +33,25 @@ function App() {
       .eq('id', id)
       .single()
     setUsuario(data)
-    setCarregando(false)
   }
 
-  if (carregando) return <p>Carregando...</p>
-
+  if (sessao === undefined) return <p>Carregando...</p>
   if (!sessao) return <Login />
+
+  if (!usuario) return <p>Carregando...</p>
 
   return (
     <Routes>
-      <Route path="/admin" element={usuario?.tipo === 'admin' ? <AdminHome /> : <Navigate to="/" />} />
-      <Route path="/admin/turmas" element={usuario?.tipo === 'admin' ? <Turmas /> : <Navigate to="/" />} />
-      <Route path="/admin/professores" element={usuario?.tipo === 'admin' ? <Professores /> : <Navigate to="/" />} />
-      <Route path="/admin/alunos" element={usuario?.tipo === 'admin' ? <Alunos /> : <Navigate to="/" />} />
-      <Route path="/admin/conteudos" element={usuario?.tipo === 'admin' ? <Conteudos /> : <Navigate to="/" />} />
-      <Route path="/professor" element={usuario?.tipo === 'professor' ? <ProfessorHome /> : <Navigate to="/" />} />
-      <Route path="/aluno" element={usuario?.tipo === 'aluno' ? <AlunoHome /> : <Navigate to="/" />} />
+      <Route path="/admin" element={usuario.tipo === 'admin' ? <AdminHome /> : <Navigate to="/" />} />
+      <Route path="/admin/turmas" element={usuario.tipo === 'admin' ? <Turmas /> : <Navigate to="/" />} />
+      <Route path="/admin/professores" element={usuario.tipo === 'admin' ? <Professores /> : <Navigate to="/" />} />
+      <Route path="/admin/alunos" element={usuario.tipo === 'admin' ? <Alunos /> : <Navigate to="/" />} />
+      <Route path="/admin/conteudos" element={usuario.tipo === 'admin' ? <Conteudos /> : <Navigate to="/" />} />
+      <Route path="/professor" element={usuario.tipo === 'professor' ? <ProfessorHome /> : <Navigate to="/" />} />
+      <Route path="/aluno" element={usuario.tipo === 'aluno' ? <AlunoHome /> : <Navigate to="/" />} />
       <Route path="*" element={
-        usuario?.tipo === 'admin' ? <Navigate to="/admin" /> :
-        usuario?.tipo === 'professor' ? <Navigate to="/professor" /> :
+        usuario.tipo === 'admin' ? <Navigate to="/admin" /> :
+        usuario.tipo === 'professor' ? <Navigate to="/professor" /> :
         <Navigate to="/aluno" />
       } />
     </Routes>
