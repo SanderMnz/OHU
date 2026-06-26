@@ -1,12 +1,11 @@
 import MenuAdmin from '../../components/MenuAdmin'
 
-export default function AdminHome() {
+export default function Turmas() {
   return (
     <div style={{ display: 'flex' }}>
       <MenuAdmin />
       <div style={{ padding: '20px' }}>
-        <h1>Painel do Admin</h1>
-        <p>Use o menu ao lado para navegar.</p>
+        <h1>Turmas</h1>
       </div>
     </div>
   )
