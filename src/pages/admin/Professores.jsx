@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import MenuAdmin from '../../components/MenuAdmin'
-import { supabase } from '../../lib/supabase'
+import { supabase, supabaseAdmin } from '../../lib/supabase'
 
 export default function Professores() {
   const [professores, setProfessores] = useState([])
   const [turmas, setTurmas] = useState([])
   const [nome, setNome] = useState('')
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [senha, setSenha] = useState('')
   const [turmaSelecionada, setTurmaSelecionada] = useState('')
   const [carregando, setCarregando] = useState(false)
@@ -36,30 +36,47 @@ export default function Professores() {
 
   async function cadastrarProfessor() {
     setErro('')
-    if (!nome || !email || !senha) {
-      setErro('Preencha todos os campos obrigatórios')
+    if (!nome || !username || !senha) {
+      setErro('Preencha todos os campos')
       return
     }
 
     setCarregando(true)
 
-    const { error } = await supabase.rpc('criar_professor', {
-      p_email: email,
-      p_senha: senha,
-      p_nome: nome,
-      p_turma_id: turmaSelecionada || null
+    const email = `${username}@ohu.app`
+
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password: senha,
+      email_confirm: true
     })
 
-    if (error) {
-      setErro('Erro ao cadastrar professor: ' + error.message)
-    } else {
-      setNome('')
-      setEmail('')
-      setSenha('')
-      setTurmaSelecionada('')
-      buscarProfessores()
+    if (authError) {
+      setErro('Erro ao cadastrar: ' + authError.message)
+      setCarregando(false)
+      return
     }
 
+    await supabase.from('usuarios').insert({
+      id: authData.user.id,
+      nome,
+      email,
+      username,
+      tipo: 'professor'
+    })
+
+    if (turmaSelecionada) {
+      await supabase.from('turma_professor').insert({
+        turma_id: turmaSelecionada,
+        professor_id: authData.user.id
+      })
+    }
+
+    setNome('')
+    setUsername('')
+    setSenha('')
+    setTurmaSelecionada('')
+    buscarProfessores()
     setCarregando(false)
   }
 
@@ -81,9 +98,9 @@ export default function Professores() {
           onChange={(e) => setNome(e.target.value)}
         />
         <input
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Nome de usuario (ex: profjoao)"
+          value={username}
+          onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s/g, ''))}
         />
         <input
           placeholder="Senha inicial"
@@ -103,7 +120,7 @@ export default function Professores() {
         <button onClick={cadastrarProfessor} disabled={carregando}>
           {carregando ? 'Salvando...' : 'Cadastrar'}
         </button>
-        {erro && <p>{erro}</p>}
+        {erro && <p style={{ color: 'red' }}>{erro}</p>}
 
         <h2>Professores cadastrados</h2>
         {professores.length === 0 && <p>Nenhum professor cadastrado ainda.</p>}
@@ -111,16 +128,16 @@ export default function Professores() {
           <thead>
             <tr>
               <th>Nome</th>
-              <th>Email</th>
+              <th>Usuario</th>
               <th>Turma</th>
-              <th>Ações</th>
+              <th>Acoes</th>
             </tr>
           </thead>
           <tbody>
             {professores.map((prof) => (
               <tr key={prof.id}>
                 <td>{prof.nome}</td>
-                <td>{prof.email}</td>
+                <td>{prof.username}</td>
                 <td>{prof.turma_professor?.[0]?.turmas?.nome || 'Sem turma'}</td>
                 <td>
                   <button onClick={() => apagarProfessor(prof.id)}>Apagar</button>
