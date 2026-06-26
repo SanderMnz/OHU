@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 export default function Login() {
-  const [email, setEmail] = useState('')
+  const [identificacao, setIdentificacao] = useState('')
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(false)
@@ -11,16 +11,20 @@ export default function Login() {
     setCarregando(true)
     setErro('')
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
+    const isEmail = identificacao.includes('@')
+    const emailFinal = isEmail ? identificacao : `${identificacao}@ohu.app`
+
+    console.log('email tentando:', emailFinal)
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: emailFinal,
       password: senha,
     })
 
-    console.log('data:', data)
     console.log('erro:', error)
 
     if (error) {
-      setErro(error.message)
+      setErro('Usuário ou senha incorretos')
     }
 
     setCarregando(false)
@@ -31,10 +35,10 @@ export default function Login() {
       <h1>OHU — Login</h1>
 
       <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        type="text"
+        placeholder="Email ou nome de usuário"
+        value={identificacao}
+        onChange={(e) => setIdentificacao(e.target.value)}
       />
 
       <input
@@ -48,7 +52,7 @@ export default function Login() {
         {carregando ? 'Entrando...' : 'Entrar'}
       </button>
 
-      {erro && <p>{erro}</p>}
+      {erro && <p style={{ color: 'red' }}>{erro}</p>}
     </div>
   )
 }
