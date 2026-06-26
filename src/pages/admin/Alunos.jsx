@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import MenuAdmin from '../../components/MenuAdmin'
-import { supabase } from '../../lib/supabase'
+import { supabase, supabaseAdmin } from '../../lib/supabase'
 
 export default function Alunos() {
   const [alunos, setAlunos] = useState([])
@@ -45,23 +45,38 @@ export default function Alunos() {
 
     setCarregando(true)
 
-    const { error } = await supabase.rpc('criar_aluno', {
-      p_nome: nome,
-      p_username: username,
-      p_senha: senha,
-      p_turma_id: turmaSelecionada
+    const email = `${username}@ohu.app`
+
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password: senha,
+      email_confirm: true
     })
 
-    if (error) {
-      setErro('Erro ao cadastrar aluno: ' + error.message)
-    } else {
-      setNome('')
-      setUsername('')
-      setSenha('')
-      setTurmaSelecionada('')
-      buscarAlunos()
+    if (authError) {
+      setErro('Erro ao cadastrar: ' + authError.message)
+      setCarregando(false)
+      return
     }
 
+    await supabase.from('usuarios').insert({
+      id: authData.user.id,
+      nome,
+      email,
+      username,
+      tipo: 'aluno'
+    })
+
+    await supabase.from('turma_aluno').insert({
+      turma_id: turmaSelecionada,
+      aluno_id: authData.user.id
+    })
+
+    setNome('')
+    setUsername('')
+    setSenha('')
+    setTurmaSelecionada('')
+    buscarAlunos()
     setCarregando(false)
   }
 
@@ -90,24 +105,40 @@ export default function Alunos() {
 
       if (!p_nome || !p_username || !p_senha) {
         falha++
-        erros.push(`Linha inválida: ${linha}`)
         continue
       }
 
-      const { error } = await supabase.rpc('criar_aluno', {
-        p_nome,
-        p_username: p_username.toLowerCase().replace(/\s/g, ''),
-        p_senha,
-        p_turma_id: turmaSelecionada
+      const email = `${p_username.toLowerCase().replace(/\s/g, '')}@ohu.app`
+
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password: p_senha,
+        email_confirm: true
       })
 
-      if (error) {
+      if (authError) {
         falha++
-        erros.push(`Erro em ${p_nome}: ${error.message}`)
-      } else sucesso++
+        erros.push(`Erro em ${p_nome}: ${authError.message}`)
+        continue
+      }
+
+      await supabase.from('usuarios').insert({
+        id: authData.user.id,
+        nome: p_nome,
+        email,
+        username: p_username.toLowerCase().replace(/\s/g, ''),
+        tipo: 'aluno'
+      })
+
+      await supabase.from('turma_aluno').insert({
+        turma_id: turmaSelecionada,
+        aluno_id: authData.user.id
+      })
+
+      sucesso++
     }
 
-    setResultadoImport(`Concluído: ${sucesso} cadastrados, ${falha} com erro. Erros: ${erros.join(' | ')}`)
+    setResultadoImport(`Concluído: ${sucesso} cadastrados, ${falha} com erro. ${erros.join(' | ')}`)
     buscarAlunos()
     setImportando(false)
   }
