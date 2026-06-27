@@ -14,6 +14,7 @@ import EditarLista from './pages/admin/EditarLista'
 import ProfessorTurmas from './pages/professor/ProfessorTurmas'
 import ProfessorNotas from './pages/professor/ProfessorNotas'
 import ProfessorRelatorios from './pages/professor/ProfessorRelatorios'
+import ProfessorExercicios from './pages/professor/ProfessorExercicios'
 import AlunoConteudos from './pages/aluno/AlunoConteudos'
 import AlunoNotas from './pages/aluno/AlunoNotas'
 import AlunoLista from './pages/aluno/AlunoLista'
@@ -47,7 +48,6 @@ function App() {
 
   if (sessao === undefined) return <p>Carregando...</p>
   if (!sessao) return <Login />
-
   if (!usuario) return <p>Carregando...</p>
 
   return (
@@ -61,14 +61,15 @@ function App() {
       <Route path="/admin/conteudos/:id" element={usuario.tipo === 'admin' ? <EditarConteudo /> : <Navigate to="/" />} />
       <Route path="/admin/conteudos/:id/lista/:listaId" element={usuario.tipo === 'admin' ? <EditarLista /> : <Navigate to="/" />} />
       <Route path="/professor" element={usuario.tipo === 'professor' ? <ProfessorHome /> : <Navigate to="/" />} />
+      <Route path="/professor/turmas" element={usuario.tipo === 'professor' ? <ProfessorTurmas /> : <Navigate to="/" />} />
+      <Route path="/professor/notas" element={usuario.tipo === 'professor' ? <ProfessorNotas /> : <Navigate to="/" />} />
+      <Route path="/professor/relatorios" element={usuario.tipo === 'professor' ? <ProfessorRelatorios /> : <Navigate to="/" />} />
+      <Route path="/professor/exercicios" element={usuario.tipo === 'professor' ? <ProfessorExercicios /> : <Navigate to="/" />} />
       <Route path="/aluno" element={usuario.tipo === 'aluno' ? <AlunoHome /> : <Navigate to="/" />} />
       <Route path="/aluno/conteudos" element={usuario.tipo === 'aluno' ? <AlunoConteudos /> : <Navigate to="/" />} />
       <Route path="/aluno/conteudo/:id" element={usuario.tipo === 'aluno' ? <AlunoConteudo /> : <Navigate to="/" />} />
       <Route path="/aluno/notas" element={usuario.tipo === 'aluno' ? <AlunoNotas /> : <Navigate to="/" />} />
       <Route path="/aluno/lista/:listaId" element={usuario.tipo === 'aluno' ? <AlunoLista /> : <Navigate to="/" />} />
-      <Route path="/professor/turmas" element={usuario.tipo === 'professor' ? <ProfessorTurmas /> : <Navigate to="/" />} />
-      <Route path="/professor/notas" element={usuario.tipo === 'professor' ? <ProfessorNotas /> : <Navigate to="/" />} />
-      <Route path="/professor/relatorios" element={usuario.tipo === 'professor' ? <ProfessorRelatorios /> : <Navigate to="/" />} />
       <Route path="*" element={
         usuario.tipo === 'admin' ? <Navigate to="/admin" /> :
         usuario.tipo === 'professor' ? <Navigate to="/professor" /> :

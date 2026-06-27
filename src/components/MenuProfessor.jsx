@@ -11,6 +11,7 @@ export default function MenuProfessor() {
           <li><Link to="/professor/turmas">Minhas Turmas</Link></li>
           <li><Link to="/professor/notas">Lancamento de Notas</Link></li>
           <li><Link to="/professor/relatorios">Relatorios</Link></li>
+          <li><Link to="/professor/exercicios">Exercicios Alunos</Link></li>
         </ul>
       </nav>
       <button onClick={() => supabase.auth.signOut()}>Sair</button>
