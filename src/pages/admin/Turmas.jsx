@@ -7,9 +7,9 @@ export default function Turmas() {
   const [professores, setProfessores] = useState([])
   const [nome, setNome] = useState('')
   const [anoSerie, setAnoSerie] = useState('')
+  const [tipo, setTipo] = useState('diurno')
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
-  const [professoresTurma, setProfessoresTurma] = useState({})
   const [professorSelecionado, setProfessorSelecionado] = useState({})
 
   async function buscarTurmas() {
@@ -44,16 +44,30 @@ export default function Turmas() {
     setCarregando(true)
     const { error } = await supabase
       .from('turmas')
-      .insert({ nome, ano_serie: anoSerie })
+      .insert({ nome, ano_serie: anoSerie, tipo, periodo_ativo: 1 })
 
     if (error) {
       setErro('Erro ao cadastrar turma')
     } else {
       setNome('')
       setAnoSerie('')
+      setTipo('diurno')
       buscarTurmas()
     }
     setCarregando(false)
+  }
+
+  async function avancarPeriodo(turma) {
+    const maximo = turma.tipo === 'eja' ? 3 : 4
+    if (turma.periodo_ativo >= maximo) {
+      alert('Ja esta no ultimo periodo do ano!')
+      return
+    }
+    await supabase
+      .from('turmas')
+      .update({ periodo_ativo: turma.periodo_ativo + 1 })
+      .eq('id', turma.id)
+    buscarTurmas()
   }
 
   async function vincularProfessor(turmaId) {
@@ -86,6 +100,11 @@ export default function Turmas() {
     buscarTurmas()
   }
 
+  function labelPeriodo(turma) {
+    const tipo = turma.tipo === 'eja' ? 'Trimestre' : 'Bimestre'
+    return `${turma.periodo_ativo}º ${tipo}`
+  }
+
   return (
     <div style={{ display: 'flex' }}>
       <MenuAdmin />
@@ -103,6 +122,10 @@ export default function Turmas() {
           value={anoSerie}
           onChange={(e) => setAnoSerie(e.target.value)}
         />
+        <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
+          <option value="diurno">Diurno (4 bimestres)</option>
+          <option value="eja">EJA (3 trimestres)</option>
+        </select>
         <button onClick={cadastrarTurma} disabled={carregando}>
           {carregando ? 'Salvando...' : 'Cadastrar'}
         </button>
@@ -115,6 +138,8 @@ export default function Turmas() {
             <tr>
               <th>Nome</th>
               <th>Ano/Serie</th>
+              <th>Tipo</th>
+              <th>Periodo Ativo</th>
               <th>Professores</th>
               <th>Vincular Professor</th>
               <th>Acoes</th>
@@ -125,6 +150,13 @@ export default function Turmas() {
               <tr key={turma.id}>
                 <td>{turma.nome}</td>
                 <td>{turma.ano_serie}</td>
+                <td>{turma.tipo === 'eja' ? 'EJA' : 'Diurno'}</td>
+                <td>
+                  {labelPeriodo(turma)}
+                  <button onClick={() => avancarPeriodo(turma)} style={{ marginLeft: '10px' }}>
+                    Avancar
+                  </button>
+                </td>
                 <td>
                   {turma.turma_professor?.map(tp => (
                     <div key={tp.professor_id}>

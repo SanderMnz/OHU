@@ -4,8 +4,7 @@ import { supabase } from '../../lib/supabase'
 
 export default function ProfessorNotas() {
   const [turmas, setTurmas] = useState([])
-  const [turmaSelecionada, setTurmaSelecionada] = useState('')
-  const [bimestre, setBimestre] = useState('')
+  const [turmaSelecionada, setTurmaSelecionada] = useState(null)
   const [aba, setAba] = useState('provas')
 
   useEffect(() => {
@@ -15,12 +14,17 @@ export default function ProfessorNotas() {
   async function buscarTurmas() {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return
-
     const { data } = await supabase
       .from('turma_professor')
       .select('turmas(*)')
       .eq('professor_id', session.user.id)
     setTurmas(data?.map(t => t.turmas) || [])
+  }
+
+  function labelPeriodo(turma) {
+    if (!turma) return ''
+    const tipo = turma.tipo === 'eja' ? 'Trimestre' : 'Bimestre'
+    return `${turma.periodo_ativo}º ${tipo}`
   }
 
   return (
@@ -30,23 +34,27 @@ export default function ProfessorNotas() {
         <h1>Lancamento de Notas</h1>
 
         <div style={{ marginBottom: '20px' }}>
-          <select value={turmaSelecionada} onChange={(e) => setTurmaSelecionada(e.target.value)}>
+          <select
+            value={turmaSelecionada?.id || ''}
+            onChange={(e) => {
+              const turma = turmas.find(t => t.id === e.target.value)
+              setTurmaSelecionada(turma || null)
+            }}
+          >
             <option value="">Selecione a turma</option>
             {turmas.map(t => (
               <option key={t.id} value={t.id}>{t.nome}</option>
             ))}
           </select>
 
-          <select value={bimestre} onChange={(e) => setBimestre(e.target.value)} style={{ marginLeft: '10px' }}>
-            <option value="">Selecione o bimestre</option>
-            <option value="1">1 Bimestre</option>
-            <option value="2">2 Bimestre</option>
-            <option value="3">3 Bimestre</option>
-            <option value="4">4 Bimestre</option>
-          </select>
+          {turmaSelecionada && (
+            <strong style={{ marginLeft: '15px' }}>
+              Periodo ativo: {labelPeriodo(turmaSelecionada)}
+            </strong>
+          )}
         </div>
 
-        {turmaSelecionada && bimestre && (
+        {turmaSelecionada && (
           <div>
             <div style={{ marginBottom: '10px' }}>
               <button onClick={() => setAba('provas')} style={{ marginRight: '5px', fontWeight: aba === 'provas' ? 'bold' : 'normal' }}>Provas</button>
@@ -55,10 +63,10 @@ export default function ProfessorNotas() {
               <button onClick={() => setAba('participacao')} style={{ fontWeight: aba === 'participacao' ? 'bold' : 'normal' }}>Participacao</button>
             </div>
 
-            {aba === 'provas' && <AbaProvas turmaId={turmaSelecionada} bimestre={bimestre} />}
-            {aba === 'adr' && <AbaAdr turmaId={turmaSelecionada} bimestre={bimestre} />}
-            {aba === 'miniteste' && <AbaPresenca turmaId={turmaSelecionada} bimestre={bimestre} tipo="miniteste" />}
-            {aba === 'participacao' && <AbaPresenca turmaId={turmaSelecionada} bimestre={bimestre} tipo="participacao" />}
+            {aba === 'provas' && <AbaProvas turma={turmaSelecionada} />}
+            {aba === 'adr' && <AbaAdr turma={turmaSelecionada} />}
+            {aba === 'miniteste' && <AbaPresenca turma={turmaSelecionada} tipo="miniteste" />}
+            {aba === 'participacao' && <AbaPresenca turma={turmaSelecionada} tipo="participacao" />}
           </div>
         )}
       </div>
@@ -66,7 +74,7 @@ export default function ProfessorNotas() {
   )
 }
 
-function AbaProvas({ turmaId, bimestre }) {
+function AbaProvas({ turma }) {
   const [provas, setProvas] = useState([])
   const [alunos, setAlunos] = useState([])
   const [nomeProva, setNomeProva] = useState('')
@@ -76,14 +84,14 @@ function AbaProvas({ turmaId, bimestre }) {
   useEffect(() => {
     buscarProvas()
     buscarAlunos()
-  }, [turmaId, bimestre])
+  }, [turma])
 
   async function buscarProvas() {
     const { data } = await supabase
       .from('provas')
       .select('*')
-      .eq('turma_id', turmaId)
-      .eq('bimestre', bimestre)
+      .eq('turma_id', turma.id)
+      .eq('bimestre', turma.periodo_ativo)
     setProvas(data || [])
   }
 
@@ -91,16 +99,16 @@ function AbaProvas({ turmaId, bimestre }) {
     const { data } = await supabase
       .from('turma_aluno')
       .select('usuarios(id, nome)')
-      .eq('turma_id', turmaId)
+      .eq('turma_id', turma.id)
     setAlunos(data?.map(a => a.usuarios) || [])
   }
 
   async function criarProva() {
     if (!nomeProva) return
     await supabase.from('provas').insert({
-      turma_id: turmaId,
+      turma_id: turma.id,
       nome: nomeProva,
-      bimestre: parseInt(bimestre)
+      bimestre: turma.periodo_ativo
     })
     setNomeProva('')
     buscarProvas()
@@ -132,7 +140,11 @@ function AbaProvas({ turmaId, bimestre }) {
       if (existing) {
         await supabase.from('notas_prova').update({ nota }).eq('id', existing.id)
       } else {
-        await supabase.from('notas_prova').insert({ prova_id: provaSelecionada, aluno_id: aluno.id, nota })
+        await supabase.from('notas_prova').insert({
+          prova_id: provaSelecionada,
+          aluno_id: aluno.id,
+          nota
+        })
       }
     }
     alert('Notas salvas!')
@@ -182,27 +194,27 @@ function AbaProvas({ turmaId, bimestre }) {
   )
 }
 
-function AbaAdr({ turmaId, bimestre }) {
+function AbaAdr({ turma }) {
   const [alunos, setAlunos] = useState([])
   const [notas, setNotas] = useState({})
 
   useEffect(() => {
     buscarAlunos()
-  }, [turmaId, bimestre])
+  }, [turma])
 
   async function buscarAlunos() {
     const { data } = await supabase
       .from('turma_aluno')
       .select('usuarios(id, nome)')
-      .eq('turma_id', turmaId)
+      .eq('turma_id', turma.id)
     const lista = data?.map(a => a.usuarios) || []
     setAlunos(lista)
 
     const { data: notasData } = await supabase
       .from('notas_adr')
       .select('*')
-      .eq('turma_id', turmaId)
-      .eq('bimestre', bimestre)
+      .eq('turma_id', turma.id)
+      .eq('bimestre', turma.periodo_ativo)
     const notasMap = {}
     notasData?.forEach(n => { notasMap[n.aluno_id] = n.nota })
     setNotas(notasMap)
@@ -217,14 +229,19 @@ function AbaAdr({ turmaId, bimestre }) {
         .from('notas_adr')
         .select('id')
         .eq('aluno_id', aluno.id)
-        .eq('turma_id', turmaId)
-        .eq('bimestre', bimestre)
+        .eq('turma_id', turma.id)
+        .eq('bimestre', turma.periodo_ativo)
         .single()
 
       if (existing) {
         await supabase.from('notas_adr').update({ nota }).eq('id', existing.id)
       } else {
-        await supabase.from('notas_adr').insert({ aluno_id: aluno.id, turma_id: turmaId, bimestre: parseInt(bimestre), nota })
+        await supabase.from('notas_adr').insert({
+          aluno_id: aluno.id,
+          turma_id: turma.id,
+          bimestre: turma.periodo_ativo,
+          nota
+        })
       }
     }
     alert('Notas ADR salvas!')
@@ -258,7 +275,7 @@ function AbaAdr({ turmaId, bimestre }) {
   )
 }
 
-function AbaPresenca({ turmaId, bimestre, tipo }) {
+function AbaPresenca({ turma, tipo }) {
   const [alunos, setAlunos] = useState([])
   const [descricao, setDescricao] = useState('')
   const [presencas, setPresencas] = useState({})
@@ -267,13 +284,13 @@ function AbaPresenca({ turmaId, bimestre, tipo }) {
   useEffect(() => {
     buscarAlunos()
     buscarRegistros()
-  }, [turmaId, bimestre, tipo])
+  }, [turma, tipo])
 
   async function buscarAlunos() {
     const { data } = await supabase
       .from('turma_aluno')
       .select('usuarios(id, nome)')
-      .eq('turma_id', turmaId)
+      .eq('turma_id', turma.id)
     setAlunos(data?.map(a => a.usuarios) || [])
   }
 
@@ -282,8 +299,8 @@ function AbaPresenca({ turmaId, bimestre, tipo }) {
     const { data } = await supabase
       .from(tabela)
       .select('*, usuarios(nome)')
-      .eq('turma_id', turmaId)
-      .eq('bimestre', bimestre)
+      .eq('turma_id', turma.id)
+      .eq('bimestre', turma.periodo_ativo)
       .order('data', { ascending: false })
     setRegistros(data || [])
   }
@@ -296,8 +313,8 @@ function AbaPresenca({ turmaId, bimestre, tipo }) {
     for (const aluno of alunos) {
       await supabase.from(tabela).insert({
         aluno_id: aluno.id,
-        turma_id: turmaId,
-        bimestre: parseInt(bimestre),
+        turma_id: turma.id,
+        bimestre: turma.periodo_ativo,
         descricao,
         [campo]: presencas[aluno.id] || false
       })
@@ -316,7 +333,7 @@ function AbaPresenca({ turmaId, bimestre, tipo }) {
     <div>
       <h2>{titulo}</h2>
       <input
-        placeholder={`Descricao (ex: Miniteste 1 - Equacoes)`}
+        placeholder="Descricao (ex: Miniteste 1 - Equacoes)"
         value={descricao}
         onChange={(e) => setDescricao(e.target.value)}
         style={{ width: '400px' }}
