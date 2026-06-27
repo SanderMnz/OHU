@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import MenuAdmin from '../../components/MenuAdmin'
 import { supabase } from '../../lib/supabase'
 
 export default function Turmas() {
+  const navigate = useNavigate()
   const [turmas, setTurmas] = useState([])
   const [professores, setProfessores] = useState([])
   const [nome, setNome] = useState('')
@@ -181,7 +183,10 @@ export default function Turmas() {
                   <button onClick={() => vincularProfessor(turma.id)}>Vincular</button>
                 </td>
                 <td>
-                  <button onClick={() => apagarTurma(turma.id)}>Apagar</button>
+                   <button onClick={() => navigate(`/admin/turmas/${turma.id}/conteudos`)} style={{ marginRight: '5px' }}>
+                     Conteudos
+                       </button>
+                       <button onClick={() => apagarTurma(turma.id)}>Apagar</button>
                 </td>
               </tr>
             ))}
