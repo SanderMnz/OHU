@@ -25,7 +25,6 @@ export default function AlunoNotas() {
     const t = turmaAluno.turmas
     setTurma(t)
 
-    const maxPeriodo = t.tipo === 'eja' ? 3 : 4
     const tipoPeriodo = t.tipo === 'eja' ? 'Trimestre' : 'Bimestre'
     const resultados = []
 
@@ -43,7 +42,7 @@ export default function AlunoNotas() {
           .select('nota')
           .eq('prova_id', prova.id)
           .eq('aluno_id', session.user.id)
-          .single()
+          .maybeSingle()
         notasProva.push({ nome: prova.nome, nota: nota?.nota ?? '-' })
       }
 
@@ -58,23 +57,63 @@ export default function AlunoNotas() {
 
       const { data: miniData } = await supabase
         .from('registros_miniteste')
-        .select('presente')
+        .select('presente, descricao, data')
         .eq('aluno_id', session.user.id)
         .eq('turma_id', t.id)
         .eq('bimestre', p)
+        .order('data')
       const totalMini = miniData?.length || 0
       const presentesMini = miniData?.filter(r => r.presente).length || 0
       const notaMini = totalMini > 0 ? ((presentesMini / totalMini) * 10).toFixed(1) : '-'
 
       const { data: partData } = await supabase
         .from('registros_participacao')
-        .select('participou')
+        .select('participou, descricao, data')
         .eq('aluno_id', session.user.id)
         .eq('turma_id', t.id)
         .eq('bimestre', p)
+        .order('data')
       const totalPart = partData?.length || 0
       const participou = partData?.filter(r => r.participou).length || 0
       const notaPart = totalPart > 0 ? ((participou / totalPart) * 10).toFixed(1) : '-'
+
+      // Conteudos vinculados a turma no periodo
+      const { data: conteudosVinculados } = await supabase
+        .from('turma_conteudo')
+        .select('conteudos(id, titulo, listas(id, titulo, numero))')
+        .eq('turma_id', t.id)
+        .eq('bimestre', p)
+        .order('ordem')
+
+      const { data: tentativas } = await supabase
+        .from('tentativas_lista')
+        .select('lista_id, acertos, numero_tentativa')
+        .eq('aluno_id', session.user.id)
+
+      const tentativasMap = {}
+      for (const tent of tentativas || []) {
+        if (!tentativasMap[tent.lista_id]) {
+          tentativasMap[tent.lista_id] = { total: 0, melhorAcertos: 0 }
+        }
+        tentativasMap[tent.lista_id].total++
+        if (tent.acertos > tentativasMap[tent.lista_id].melhorAcertos) {
+          tentativasMap[tent.lista_id].melhorAcertos = tent.acertos
+        }
+      }
+
+      const conteudosComListas = (conteudosVinculados || []).map(cv => {
+        const conteudo = cv.conteudos
+        const listas = (conteudo?.listas || [])
+          .sort((a, b) => a.numero - b.numero)
+          .map(l => ({
+            id: l.id,
+            titulo: l.titulo,
+            numero: l.numero,
+            tentativas: tentativasMap[l.id]?.total || 0,
+            melhorAcertos: tentativasMap[l.id]?.melhorAcertos || 0
+          }))
+        return { titulo: conteudo?.titulo, listas }
+      })
 
       resultados.push({
         periodo: p,
@@ -82,7 +121,10 @@ export default function AlunoNotas() {
         notasProva,
         notaAdr,
         notaMini,
-        notaPart
+        notaPart,
+        miniRegistros: miniData || [],
+        partRegistros: partData || [],
+        exercicios: conteudosComListas
       })
     }
 
@@ -100,15 +142,17 @@ export default function AlunoNotas() {
   return (
     <div style={{ display: 'flex' }}>
       <MenuAluno />
-      <div style={{ padding: '20px' }}>
+      <div style={{ padding: '20px', maxWidth: '800px' }}>
         <h1>Minhas Notas</h1>
         {turma && <p>Turma: {turma.nome}</p>}
 
         {periodos.length === 0 && <p>Nenhuma nota disponivel ainda.</p>}
 
         {periodos.map(p => (
-          <div key={p.periodo} style={{ border: '1px solid #ccc', padding: '20px', marginBottom: '20px' }}>
+          <div key={p.periodo} style={{ border: '1px solid #ccc', padding: '20px', marginBottom: '30px' }}>
             <h2>{p.label}</h2>
+
+            <h3>Notas</h3>
             <table border="1" cellPadding="8">
               <tbody>
                 {p.notasProva.map((prova, i) => (
@@ -131,6 +175,88 @@ export default function AlunoNotas() {
                 </tr>
               </tbody>
             </table>
+
+            {p.miniRegistros.length > 0 && (
+              <>
+                <h3>Historico de Minitestes</h3>
+                <table border="1" cellPadding="8">
+                  <thead>
+                    <tr>
+                      <th>Data</th>
+                      <th>Descricao</th>
+                      <th>Presenca</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {p.miniRegistros.map((r, i) => (
+                      <tr key={i}>
+                        <td>{new Date(r.data).toLocaleDateString('pt-BR')}</td>
+                        <td>{r.descricao}</td>
+                        <td>{r.presente ? '✅' : '❌'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            )}
+
+            {p.partRegistros.length > 0 && (
+              <>
+                <h3>Historico de Participacao</h3>
+                <table border="1" cellPadding="8">
+                  <thead>
+                    <tr>
+                      <th>Data</th>
+                      <th>Descricao</th>
+                      <th>Participou</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {p.partRegistros.map((r, i) => (
+                      <tr key={i}>
+                        <td>{new Date(r.data).toLocaleDateString('pt-BR')}</td>
+                        <td>{r.descricao}</td>
+                        <td>{r.participou ? '✅' : '❌'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            )}
+
+            {p.exercicios.length > 0 && (
+              <>
+                <h3>Listas Digitais</h3>
+                {p.exercicios.map((c, i) => (
+                  <div key={i} style={{ marginBottom: '15px' }}>
+                    <strong>{c.titulo}</strong>
+                    {c.listas.length === 0 && (
+                      <p style={{ color: 'gray', fontSize: '13px' }}>Nenhuma lista disponivel.</p>
+                    )}
+                    {c.listas.length > 0 && (
+                      <table border="1" cellPadding="6" style={{ marginTop: '6px', width: '100%' }}>
+                        <thead>
+                          <tr>
+                            <th>Lista</th>
+                            <th>Tentativas</th>
+                            <th>Melhor resultado</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {c.listas.map((l, j) => (
+                            <tr key={j}>
+                              <td>Lista {l.numero} — {l.titulo}</td>
+                              <td>{l.tentativas === 0 ? 'Nao feita' : l.tentativas}</td>
+                              <td>{l.tentativas === 0 ? '-' : `${((l.melhorAcertos / 5) * 100).toFixed(0)}%`}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         ))}
       </div>

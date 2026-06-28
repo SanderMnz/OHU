@@ -6,6 +6,7 @@ export default function ProfessorExercicios() {
   const [turmas, setTurmas] = useState([])
   const [turmaSelecionada, setTurmaSelecionada] = useState(null)
   const [relatorio, setRelatorio] = useState([])
+  const [conteudos, setConteudos] = useState([])
   const [alunoExpandido, setAlunoExpandido] = useState(null)
   const [carregando, setCarregando] = useState(false)
 
@@ -28,6 +29,15 @@ export default function ProfessorExercicios() {
     setAlunoExpandido(null)
     setCarregando(true)
 
+    const { data: conteudosData } = await supabase
+      .from('turma_conteudo')
+      .select('conteudos(id, titulo, listas(id, titulo, numero))')
+      .eq('turma_id', turma.id)
+      .eq('bimestre', turma.periodo_ativo)
+      .order('ordem')
+    const conteudosLista = (conteudosData || []).map(c => c.conteudos)
+    setConteudos(conteudosLista)
+
     const { data: alunosData } = await supabase
       .from('turma_aluno')
       .select('usuarios(id, nome)')
@@ -37,16 +47,35 @@ export default function ProfessorExercicios() {
     const linhas = await Promise.all(alunos.map(async (aluno) => {
       const { data: tentativas } = await supabase
         .from('tentativas_lista')
-        .select('*, listas(titulo, numero, conteudos(titulo))')
+        .select('lista_id, acertos, numero_tentativa, tempo_segundos, feita_em, listas(titulo, numero, conteudos(titulo))')
         .eq('aluno_id', aluno.id)
         .order('feita_em', { ascending: false })
 
-      const totalListas = tentativas?.length || 0
-      const totalAcertos = tentativas?.reduce((acc, t) => acc + t.acertos, 0) || 0
-      const listasUnicas = new Set(tentativas.map(t => t.lista_id)).size
-      const mediaAcertos = listasUnicas > 0 ? ((totalAcertos / (totalAcertos + tentativas.reduce((acc, t) => acc + (5 - t.acertos), 0))) * 100).toFixed(0) : '-'
+      const porConteudo = {}
+      for (const conteudo of conteudosLista) {
+        if (!conteudo) continue
+        const listasDoConteudo = conteudo.listas || []
+        let listasFeitas_cont = 0
 
-      return { aluno, tentativas: tentativas || [], totalListas, mediaAcertos }
+        for (const lista of listasDoConteudo) {
+          const tentativasDaLista = tentativas?.filter(t => t.lista_id === lista.id) || []
+          if (tentativasDaLista.length > 0) {
+            listasFeitas_cont++
+          }
+        }
+
+        const percentualListas = listasDoConteudo.length > 0
+          ? ((listasFeitas_cont / listasDoConteudo.length) * 100).toFixed(0)
+          : null
+
+        porConteudo[conteudo.id] = {
+          listasFeitas: listasFeitas_cont,
+          totalListas: listasDoConteudo.length,
+          percentual: percentualListas
+        }
+      }
+
+      return { aluno, tentativas: tentativas || [], porConteudo }
     }))
 
     setRelatorio(linhas)
@@ -54,9 +83,12 @@ export default function ProfessorExercicios() {
   }
 
   function formatarTempo(s) {
-    const min = Math.floor(s / 60).toString().padStart(2, '0')
-    const seg = (s % 60).toString().padStart(2, '0')
-    return `${min}:${seg}`
+    if (!s && s !== 0) return '-'
+    const seg = parseInt(s)
+    if (isNaN(seg)) return '-'
+    const min = Math.floor(seg / 60).toString().padStart(2, '0')
+    const seconds = (seg % 60).toString().padStart(2, '0')
+    return `${min}:${seconds}`
   }
 
   return (
@@ -81,23 +113,51 @@ export default function ProfessorExercicios() {
         {carregando && <p>Carregando...</p>}
 
         {relatorio.length > 0 && (
-          <div style={{ marginTop: '20px' }}>
+          <div style={{ marginTop: '20px', overflowX: 'auto' }}>
+            <p style={{ fontSize: '13px', color: 'gray' }}>
+              🔴 Nenhuma lista feita neste conteudo &nbsp;|&nbsp; 🔵 Mais de 80% das listas feitas
+            </p>
             <table border="1" cellPadding="8" style={{ width: '100%' }}>
               <thead>
                 <tr>
                   <th>Aluno</th>
-                  <th>Listas feitas</th>
-                  <th>Media de acertos</th>
+                  {conteudos.map(c => (
+                    <th key={c.id}>
+                      {c.titulo}
+                      <br />
+                      <small>({c.listas?.length || 0} listas)</small>
+                    </th>
+                  ))}
                   <th>Detalhes</th>
                 </tr>
               </thead>
               <tbody>
-                {relatorio.map(({ aluno, tentativas, totalListas, mediaAcertos }) => (
+                {relatorio.map(({ aluno, tentativas, porConteudo }) => (
                   <>
                     <tr key={aluno.id}>
                       <td>{aluno.nome}</td>
-                      <td>{totalListas}</td>
-                      <td>{mediaAcertos === '-' ? '-' : `${mediaAcertos}%`}</td>
+                      {conteudos.map(c => {
+                        const pc = porConteudo[c.id]
+                        const corCelula = !pc || pc.listasFeitas === 0
+                          ? '#fee2e2'
+                          : pc.percentual !== null && parseInt(pc.percentual) >= 80
+                            ? '#dbeafe'
+                            : 'white'
+                        return (
+                          <td key={c.id} style={{ textAlign: 'center', background: corCelula }}>
+                            {pc && pc.listasFeitas > 0 ? (
+                              <>
+                                <div>{pc.listasFeitas}/{pc.totalListas} listas</div>
+                                <div style={{ fontSize: '12px', color: 'gray' }}>
+                                  {pc.percentual !== null ? `${pc.percentual}%` : '-'}
+                                </div>
+                              </>
+                            ) : (
+                              <div>0/{c.listas?.length || 0} listas</div>
+                            )}
+                          </td>
+                        )
+                      })}
                       <td>
                         <button onClick={() => setAlunoExpandido(alunoExpandido === aluno.id ? null : aluno.id)}>
                           {alunoExpandido === aluno.id ? 'Fechar' : 'Ver detalhes'}
@@ -105,8 +165,8 @@ export default function ProfessorExercicios() {
                       </td>
                     </tr>
                     {alunoExpandido === aluno.id && (
-                      <tr>
-                        <td colSpan="4" style={{ background: '#f9f9f9', padding: '15px' }}>
+                      <tr key={`${aluno.id}-detalhes`}>
+                        <td colSpan={conteudos.length + 2} style={{ background: '#f9f9f9', padding: '15px' }}>
                           {tentativas.length === 0 ? (
                             <p>Este aluno ainda nao fez nenhum exercicio.</p>
                           ) : (

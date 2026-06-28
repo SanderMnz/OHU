@@ -10,8 +10,6 @@ export default function TurmaConteudos() {
   const [turma, setTurma] = useState(null)
   const [conteudosVinculados, setConteudosVinculados] = useState([])
   const [todosConteudos, setTodosConteudos] = useState([])
-  const [conteudoSelecionado, setConteudoSelecionado] = useState('')
-  const [ordem, setOrdem] = useState('')
 
   useEffect(() => {
     buscarTurma()
@@ -46,18 +44,24 @@ export default function TurmaConteudos() {
     setTodosConteudos(data || [])
   }
 
-  async function vincularConteudo() {
-    if (!conteudoSelecionado || !ordem || !turma) return
+  async function vincularConteudo(conteudoId) {
+    if (!turma) return
+    const jaVinculado = conteudosVinculados.find(
+      v => v.conteudo_id === conteudoId && v.bimestre === turma.periodo_ativo
+    )
+    if (jaVinculado) return
+
+    const ordemAtual = conteudosVinculados.filter(
+      v => v.bimestre === turma.periodo_ativo
+    ).length + 1
 
     await supabase.from('turma_conteudo').insert({
       turma_id: id,
-      conteudo_id: conteudoSelecionado,
+      conteudo_id: conteudoId,
       bimestre: turma.periodo_ativo,
-      ordem: parseInt(ordem)
+      ordem: ordemAtual
     })
 
-    setConteudoSelecionado('')
-    setOrdem('')
     buscarConteudosVinculados()
   }
 
@@ -72,6 +76,12 @@ export default function TurmaConteudos() {
     return `${turma.periodo_ativo}º ${tipo}`
   }
 
+  function isVinculado(conteudoId) {
+    return conteudosVinculados.some(
+      v => v.conteudo_id === conteudoId && v.bimestre === turma?.periodo_ativo
+    )
+  }
+
   if (!turma) return <p>Carregando...</p>
 
   return (
@@ -82,49 +92,64 @@ export default function TurmaConteudos() {
         <h1>Conteudos da Turma {turma.nome}</h1>
         <p>Periodo ativo: {labelPeriodo(turma)}</p>
 
-        <h2>Vincular conteudo</h2>
-        <select
-          value={conteudoSelecionado}
-          onChange={(e) => setConteudoSelecionado(e.target.value)}
-        >
-          <option value="">Selecione o conteudo</option>
-          {todosConteudos.map(c => (
-            <option key={c.id} value={c.id}>{c.titulo}</option>
-          ))}
-        </select>
-        <input
-          type="number"
-          placeholder="Ordem (1, 2, 3...)"
-          value={ordem}
-          onChange={(e) => setOrdem(e.target.value)}
-          style={{ marginLeft: '10px', width: '80px' }}
-        />
-        <button onClick={vincularConteudo} style={{ marginLeft: '10px' }}>
-          Vincular
-        </button>
+        <h2>Selecione os conteudos do periodo</h2>
+        <p style={{ color: 'gray', fontSize: '13px' }}>
+          Clique em um conteudo para vincular ou desvincular da turma neste periodo.
+        </p>
 
-        <h2>Conteudos vinculados</h2>
-        {conteudosVinculados.length === 0 && <p>Nenhum conteudo vinculado ainda.</p>}
+        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginBottom: '30px' }}>
+          {todosConteudos.map(c => {
+            const vinculado = isVinculado(c.id)
+            const vinculo = conteudosVinculados.find(
+              v => v.conteudo_id === c.id && v.bimestre === turma.periodo_ativo
+            )
+            return (
+              <div
+                key={c.id}
+                style={{
+                  border: `2px solid ${vinculado ? '#22c55e' : '#ccc'}`,
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  minWidth: '200px',
+                  background: vinculado ? '#f0fdf4' : 'white',
+                  cursor: 'pointer'
+                }}
+                onClick={() => vinculado ? desvincularConteudo(vinculo.id) : vincularConteudo(c.id)}
+              >
+                <p style={{ margin: 0, fontWeight: 'bold' }}>{c.titulo}</p>
+                {c.descricao && <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'gray' }}>{c.descricao}</p>}
+                <p style={{ margin: '8px 0 0', fontSize: '12px', color: vinculado ? '#16a34a' : '#999' }}>
+                  {vinculado ? `✅ Vinculado (ordem ${vinculo.ordem})` : 'Clique para vincular'}
+                </p>
+              </div>
+            )
+          })}
+        </div>
+
+        <h2>Conteudos vinculados neste periodo</h2>
+        {conteudosVinculados.filter(v => v.bimestre === turma.periodo_ativo).length === 0 && (
+          <p>Nenhum conteudo vinculado ainda.</p>
+        )}
         <table border="1" cellPadding="8">
           <thead>
             <tr>
-              <th>Periodo</th>
               <th>Ordem</th>
               <th>Conteudo</th>
               <th>Acoes</th>
             </tr>
           </thead>
           <tbody>
-            {conteudosVinculados.map(v => (
-              <tr key={v.id}>
-                <td>{v.bimestre}º</td>
-                <td>{v.ordem}</td>
-                <td>{v.conteudos?.titulo}</td>
-                <td>
-                  <button onClick={() => desvincularConteudo(v.id)}>Remover</button>
-                </td>
-              </tr>
-            ))}
+            {conteudosVinculados
+              .filter(v => v.bimestre === turma.periodo_ativo)
+              .map(v => (
+                <tr key={v.id}>
+                  <td>{v.ordem}</td>
+                  <td>{v.conteudos?.titulo}</td>
+                  <td>
+                    <button onClick={() => desvincularConteudo(v.id)}>Remover</button>
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
