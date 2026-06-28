@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import MenuProfessor from '../../components/MenuProfessor'
 import { supabase } from '../../lib/supabase'
 
 export default function ProfessorTurmas() {
   const [turmas, setTurmas] = useState([])
   const [usuarioId, setUsuarioId] = useState(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     buscarUsuario()
@@ -48,7 +50,7 @@ export default function ProfessorTurmas() {
                 <td>{turma.nome}</td>
                 <td>{turma.ano_serie}</td>
                 <td>
-                  <button>Ver alunos</button>
+                  <button onClick={() => navigate(`/professor/turmas/${turma.id}/alunos`)}>Ver alunos</button>
                 </td>
               </tr>
             ))}

@@ -129,22 +129,16 @@ function AbaProvas({ turma }) {
     for (const aluno of alunos) {
       const nota = parseFloat(notas[aluno.id])
       if (isNaN(nota)) continue
-
       const { data: existing } = await supabase
         .from('notas_prova')
         .select('id')
         .eq('prova_id', provaSelecionada)
         .eq('aluno_id', aluno.id)
-        .single()
-
+        .maybeSingle()
       if (existing) {
         await supabase.from('notas_prova').update({ nota }).eq('id', existing.id)
       } else {
-        await supabase.from('notas_prova').insert({
-          prova_id: provaSelecionada,
-          aluno_id: aluno.id,
-          nota
-        })
+        await supabase.from('notas_prova').insert({ prova_id: provaSelecionada, aluno_id: aluno.id, nota })
       }
     }
     alert('Notas salvas!')
@@ -155,7 +149,6 @@ function AbaProvas({ turma }) {
       <h2>Provas</h2>
       <input placeholder="Nome da prova" value={nomeProva} onChange={(e) => setNomeProva(e.target.value)} />
       <button onClick={criarProva}>Criar prova</button>
-
       {provas.length > 0 && (
         <div style={{ marginTop: '10px' }}>
           <select value={provaSelecionada} onChange={(e) => buscarNotas(e.target.value)}>
@@ -164,7 +157,6 @@ function AbaProvas({ turma }) {
           </select>
         </div>
       )}
-
       {provaSelecionada && (
         <div style={{ marginTop: '10px' }}>
           <table border="1" cellPadding="8">
@@ -209,7 +201,6 @@ function AbaAdr({ turma }) {
       .eq('turma_id', turma.id)
     const lista = data?.map(a => a.usuarios) || []
     setAlunos(lista)
-
     const { data: notasData } = await supabase
       .from('notas_adr')
       .select('*')
@@ -224,24 +215,17 @@ function AbaAdr({ turma }) {
     for (const aluno of alunos) {
       const nota = parseFloat(notas[aluno.id])
       if (isNaN(nota)) continue
-
       const { data: existing } = await supabase
         .from('notas_adr')
         .select('id')
         .eq('aluno_id', aluno.id)
         .eq('turma_id', turma.id)
         .eq('bimestre', turma.periodo_ativo)
-        .single()
-
+        .maybeSingle()
       if (existing) {
         await supabase.from('notas_adr').update({ nota }).eq('id', existing.id)
       } else {
-        await supabase.from('notas_adr').insert({
-          aluno_id: aluno.id,
-          turma_id: turma.id,
-          bimestre: turma.periodo_ativo,
-          nota
-        })
+        await supabase.from('notas_adr').insert({ aluno_id: aluno.id, turma_id: turma.id, bimestre: turma.periodo_ativo, nota })
       }
     }
     alert('Notas ADR salvas!')
@@ -298,10 +282,10 @@ function AbaPresenca({ turma, tipo }) {
     const tabela = tipo === 'miniteste' ? 'registros_miniteste' : 'registros_participacao'
     const { data } = await supabase
       .from(tabela)
-      .select('*, usuarios(nome)')
+      .select('*')
       .eq('turma_id', turma.id)
       .eq('bimestre', turma.periodo_ativo)
-      .order('data', { ascending: false })
+      .order('data', { ascending: true })
     setRegistros(data || [])
   }
 
@@ -329,57 +313,82 @@ function AbaPresenca({ turma, tipo }) {
   const titulo = tipo === 'miniteste' ? 'Miniteste' : 'Participacao'
   const campo = tipo === 'miniteste' ? 'presente' : 'participou'
 
+  // Agrupa registros por descricao+data (cada evento)
+  const eventos = []
+  const eventosVistos = new Set()
+  registros.forEach(r => {
+    const chave = `${r.descricao}__${new Date(r.data).toLocaleDateString('pt-BR')}`
+    if (!eventosVistos.has(chave)) {
+      eventosVistos.add(chave)
+      eventos.push({ descricao: r.descricao, data: new Date(r.data).toLocaleDateString('pt-BR') })
+    }
+  })
+
   return (
     <div>
       <h2>{titulo}</h2>
-      <input
-        placeholder="Descricao (ex: Miniteste 1 - Equacoes)"
-        value={descricao}
-        onChange={(e) => setDescricao(e.target.value)}
-        style={{ width: '400px' }}
-      />
+      <div style={{ marginBottom: '10px' }}>
+        <input
+          placeholder="Descricao (ex: Miniteste 1 - Equacoes)"
+          value={descricao}
+          onChange={(e) => setDescricao(e.target.value)}
+          style={{ width: '400px' }}
+        />
+        <button onClick={salvarPresenca} style={{ marginLeft: '10px' }}>Registrar</button>
+      </div>
 
       <table border="1" cellPadding="8" style={{ marginTop: '10px' }}>
         <thead>
-          <tr><th>Aluno</th><th>Presente</th></tr>
+          <tr>
+            <th>Aluno</th>
+            {eventos.map((e, i) => (
+              <th key={i}>{e.descricao}<br /><small>{e.data}</small></th>
+            ))}
+          </tr>
         </thead>
         <tbody>
           {alunos.map(aluno => (
             <tr key={aluno.id}>
               <td>{aluno.nome}</td>
-              <td>
-                <input
-                  type="checkbox"
-                  checked={presencas[aluno.id] || false}
-                  onChange={(e) => setPresencas({ ...presencas, [aluno.id]: e.target.checked })}
-                />
-              </td>
+              {eventos.map((evento, i) => {
+                const reg = registros.find(r =>
+                  r.aluno_id === aluno.id &&
+                  r.descricao === evento.descricao &&
+                  new Date(r.data).toLocaleDateString('pt-BR') === evento.data
+                )
+                return (
+                  <td key={i} style={{ textAlign: 'center' }}>
+                    {reg ? (reg[campo] ? '✅' : '❌') : '-'}
+                  </td>
+                )
+              })}
             </tr>
           ))}
         </tbody>
       </table>
-      <button onClick={salvarPresenca} style={{ marginTop: '10px' }}>Registrar</button>
 
-      {registros.length > 0 && (
-        <div style={{ marginTop: '20px' }}>
-          <h3>Registros anteriores</h3>
-          <table border="1" cellPadding="8">
-            <thead>
-              <tr><th>Data</th><th>Descricao</th><th>Aluno</th><th>Presente</th></tr>
-            </thead>
-            <tbody>
-              {registros.map(r => (
-                <tr key={r.id}>
-                  <td>{new Date(r.data).toLocaleDateString('pt-BR')}</td>
-                  <td>{r.descricao}</td>
-                  <td>{r.usuarios?.nome}</td>
-                  <td>{r[campo] ? 'Sim' : 'Nao'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <div style={{ marginTop: '20px' }}>
+        <h3>Novo registro</h3>
+        <table border="1" cellPadding="8">
+          <thead>
+            <tr><th>Aluno</th><th>Presente</th></tr>
+          </thead>
+          <tbody>
+            {alunos.map(aluno => (
+              <tr key={aluno.id}>
+                <td>{aluno.nome}</td>
+                <td style={{ textAlign: 'center' }}>
+                  <input
+                    type="checkbox"
+                    checked={presencas[aluno.id] || false}
+                    onChange={(e) => setPresencas({ ...presencas, [aluno.id]: e.target.checked })}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
