@@ -11,6 +11,16 @@ export default function AlunoNotas() {
     buscarDados()
   }, [])
 
+  function calcularMedia(notasProva, notaAdr, notaMini, notaPart) {
+    const valores = []
+    notasProva.forEach(p => { if (p.nota !== '-') valores.push(parseFloat(p.nota)) })
+    if (notaAdr !== '-') valores.push(parseFloat(notaAdr))
+    if (notaMini !== '-') valores.push(parseFloat(notaMini))
+    if (notaPart !== '-') valores.push(parseFloat(notaPart))
+    if (valores.length === 0) return '-'
+    return (valores.reduce((a, b) => a + b, 0) / valores.length).toFixed(1)
+  }
+
   async function buscarDados() {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return
@@ -77,7 +87,8 @@ export default function AlunoNotas() {
       const participou = partData?.filter(r => r.participou).length || 0
       const notaPart = totalPart > 0 ? ((participou / totalPart) * 10).toFixed(1) : '-'
 
-      // Conteudos vinculados a turma no periodo
+      const media = calcularMedia(notasProva, notaAdr, notaMini, notaPart)
+
       const { data: conteudosVinculados } = await supabase
         .from('turma_conteudo')
         .select('conteudos(id, titulo, listas(id, titulo, numero))')
@@ -118,17 +129,25 @@ export default function AlunoNotas() {
       resultados.push({
         periodo: p,
         label: `${p}º ${tipoPeriodo}`,
+        ativo: p === t.periodo_ativo,
         notasProva,
         notaAdr,
         notaMini,
         notaPart,
+        media,
         miniRegistros: miniData || [],
         partRegistros: partData || [],
         exercicios: conteudosComListas
       })
     }
 
-    setPeriodos(resultados)
+    // Bimestre atual primeiro, depois os anteriores
+    const ordenados = [
+      ...resultados.filter(r => r.ativo),
+      ...resultados.filter(r => !r.ativo).reverse()
+    ]
+
+    setPeriodos(ordenados)
     setCarregando(false)
   }
 
@@ -149,8 +168,8 @@ export default function AlunoNotas() {
         {periodos.length === 0 && <p>Nenhuma nota disponivel ainda.</p>}
 
         {periodos.map(p => (
-          <div key={p.periodo} style={{ border: '1px solid #ccc', padding: '20px', marginBottom: '30px' }}>
-            <h2>{p.label}</h2>
+          <div key={p.periodo} style={{ border: `2px solid ${p.ativo ? '#6366f1' : '#ccc'}`, padding: '20px', marginBottom: '30px' }}>
+            <h2>{p.label} {p.ativo && <span style={{ fontSize: '14px', color: '#6366f1' }}>— Periodo atual</span>}</h2>
 
             <h3>Notas</h3>
             <table border="1" cellPadding="8">
@@ -173,10 +192,14 @@ export default function AlunoNotas() {
                   <td>Participacao</td>
                   <td>{p.notaPart}</td>
                 </tr>
+                <tr style={{ fontWeight: 'bold', background: '#f0f0f0' }}>
+                  <td>Media</td>
+                  <td>{p.media}</td>
+                </tr>
               </tbody>
             </table>
 
-            {p.miniRegistros.length > 0 && (
+            {p.ativo && p.miniRegistros.length > 0 && (
               <>
                 <h3>Historico de Minitestes</h3>
                 <table border="1" cellPadding="8">
@@ -200,7 +223,7 @@ export default function AlunoNotas() {
               </>
             )}
 
-            {p.partRegistros.length > 0 && (
+            {p.ativo && p.partRegistros.length > 0 && (
               <>
                 <h3>Historico de Participacao</h3>
                 <table border="1" cellPadding="8">

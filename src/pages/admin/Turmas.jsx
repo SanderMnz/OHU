@@ -72,6 +72,18 @@ export default function Turmas() {
     buscarTurmas()
   }
 
+  async function retrocederPeriodo(turma) {
+    if (turma.periodo_ativo <= 1) {
+      alert('Ja esta no primeiro periodo!')
+      return
+    }
+    await supabase
+      .from('turmas')
+      .update({ periodo_ativo: turma.periodo_ativo - 1 })
+      .eq('id', turma.id)
+    buscarTurmas()
+  }
+
   async function vincularProfessor(turmaId) {
     const profId = professorSelecionado[turmaId]
     if (!profId) return
@@ -155,9 +167,12 @@ export default function Turmas() {
                 <td>{turma.tipo === 'eja' ? 'EJA' : 'Diurno'}</td>
                 <td>
                   {labelPeriodo(turma)}
-                  <button onClick={() => avancarPeriodo(turma)} style={{ marginLeft: '10px' }}>
-                    Avancar
-                  </button>
+                  <button onClick={() => retrocederPeriodo(turma)} style={{ marginRight: '5px' }}>
+                    ←
+                 </button>
+                 <button onClick={() => avancarPeriodo(turma)}>
+                   →
+                </button>
                 </td>
                 <td>
                   {turma.turma_professor?.map(tp => (
