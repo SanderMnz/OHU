@@ -47,6 +47,7 @@ export default function ProfessorRelatorios() {
       .select('*')
       .eq('turma_id', turma.id)
       .eq('bimestre', turma.periodo_ativo)
+      .order('criado_em')
     setProvas(provasData || [])
 
     const linhas = await Promise.all(alunos.map(async (aluno) => {
@@ -175,7 +176,13 @@ export default function ProfessorRelatorios() {
               <thead>
                 <tr>
                   <th>Aluno</th>
-                  {provas.map(p => <th key={p.id}>{p.nome}</th>)}
+                  {provas.map(p => (
+                    <th key={p.id}>
+                      {p.nome}
+                      <br />
+                      <small>{p.data ? new Date(p.data).toLocaleDateString('pt-BR') : p.criado_em ? new Date(p.criado_em).toLocaleDateString('pt-BR') : '-'}</small>
+                    </th>
+                  ))}
                   <th>ADR</th>
                   <th>Miniteste</th>
                   <th>Participacao</th>

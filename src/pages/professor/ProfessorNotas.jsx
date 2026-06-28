@@ -78,8 +78,11 @@ function AbaProvas({ turma }) {
   const [provas, setProvas] = useState([])
   const [alunos, setAlunos] = useState([])
   const [nomeProva, setNomeProva] = useState('')
+  const [dataProva, setDataProva] = useState('')
   const [provaSelecionada, setProvaSelecionada] = useState('')
   const [notas, setNotas] = useState({})
+  const [editandoProva, setEditandoProva] = useState(null)
+  const [nomeEditado, setNomeEditado] = useState('')
 
   useEffect(() => {
     buscarProvas()
@@ -92,6 +95,7 @@ function AbaProvas({ turma }) {
       .select('*')
       .eq('turma_id', turma.id)
       .eq('bimestre', turma.periodo_ativo)
+      .order('criado_em')
     setProvas(data || [])
   }
 
@@ -108,9 +112,32 @@ function AbaProvas({ turma }) {
     await supabase.from('provas').insert({
       turma_id: turma.id,
       nome: nomeProva,
-      bimestre: turma.periodo_ativo
+      bimestre: turma.periodo_ativo,
+      data: dataProva || null
     })
     setNomeProva('')
+    setDataProva('')
+    buscarProvas()
+  }
+
+  async function editarProva(prova) {
+    setEditandoProva(prova.id)
+    setNomeEditado(prova.nome)
+  }
+
+  async function salvarEdicaoProva(provaId) {
+    if (!nomeEditado) return
+    await supabase.from('provas').update({ nome: nomeEditado }).eq('id', provaId)
+    setEditandoProva(null)
+    setNomeEditado('')
+    buscarProvas()
+  }
+
+  async function excluirProva(provaId) {
+    if (!confirm('Excluir esta prova e todas as notas? Esta acao nao pode ser desfeita.')) return
+    await supabase.from('notas_prova').delete().eq('prova_id', provaId)
+    await supabase.from('provas').delete().eq('id', provaId)
+    setProvaSelecionada('')
     buscarProvas()
   }
 
@@ -147,18 +174,66 @@ function AbaProvas({ turma }) {
   return (
     <div>
       <h2>Provas</h2>
-      <input placeholder="Nome da prova" value={nomeProva} onChange={(e) => setNomeProva(e.target.value)} />
-      <button onClick={criarProva}>Criar prova</button>
+      <div style={{ marginBottom: '10px' }}>
+        <input
+          placeholder="Nome da prova"
+          value={nomeProva}
+          onChange={(e) => setNomeProva(e.target.value)}
+        />
+        <input
+          type="date"
+          value={dataProva}
+          onChange={(e) => setDataProva(e.target.value)}
+          style={{ marginLeft: '10px' }}
+        />
+        <button onClick={criarProva} style={{ marginLeft: '10px' }}>Criar prova</button>
+      </div>
+
       {provas.length > 0 && (
-        <div style={{ marginTop: '10px' }}>
-          <select value={provaSelecionada} onChange={(e) => buscarNotas(e.target.value)}>
-            <option value="">Selecione a prova</option>
-            {provas.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-          </select>
-        </div>
+        <table border="1" cellPadding="8" style={{ marginBottom: '15px' }}>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Data</th>
+              <th>Acoes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {provas.map(p => (
+              <tr key={p.id} style={{ background: provaSelecionada === p.id ? '#f0f0f0' : 'white' }}>
+                <td>
+                  {editandoProva === p.id ? (
+                    <input
+                      value={nomeEditado}
+                      onChange={(e) => setNomeEditado(e.target.value)}
+                      style={{ width: '200px' }}
+                    />
+                  ) : p.nome}
+                </td>
+                <td>{p.data ? new Date(p.data).toLocaleDateString('pt-BR') : '-'}</td>
+                <td>
+                  {editandoProva === p.id ? (
+                    <>
+                      <button onClick={() => salvarEdicaoProva(p.id)}>Salvar</button>
+                      <button onClick={() => setEditandoProva(null)} style={{ marginLeft: '5px' }}>Cancelar</button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={() => buscarNotas(p.id)}>Lancar notas</button>
+                      <button onClick={() => editarProva(p)} style={{ marginLeft: '5px' }}>Editar</button>
+                      <button onClick={() => excluirProva(p.id)} style={{ marginLeft: '5px' }}>Excluir</button>
+                    </>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
+
       {provaSelecionada && (
         <div style={{ marginTop: '10px' }}>
+          <h3>Lancamento de notas: {provas.find(p => p.id === provaSelecionada)?.nome}</h3>
           <table border="1" cellPadding="8">
             <thead>
               <tr><th>Aluno</th><th>Nota (0-10)</th></tr>
@@ -313,7 +388,6 @@ function AbaPresenca({ turma, tipo }) {
   const titulo = tipo === 'miniteste' ? 'Miniteste' : 'Participacao'
   const campo = tipo === 'miniteste' ? 'presente' : 'participou'
 
-  // Agrupa registros por descricao+data (cada evento)
   const eventos = []
   const eventosVistos = new Set()
   registros.forEach(r => {
@@ -337,35 +411,37 @@ function AbaPresenca({ turma, tipo }) {
         <button onClick={salvarPresenca} style={{ marginLeft: '10px' }}>Registrar</button>
       </div>
 
-      <table border="1" cellPadding="8" style={{ marginTop: '10px' }}>
-        <thead>
-          <tr>
-            <th>Aluno</th>
-            {eventos.map((e, i) => (
-              <th key={i}>{e.descricao}<br /><small>{e.data}</small></th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {alunos.map(aluno => (
-            <tr key={aluno.id}>
-              <td>{aluno.nome}</td>
-              {eventos.map((evento, i) => {
-                const reg = registros.find(r =>
-                  r.aluno_id === aluno.id &&
-                  r.descricao === evento.descricao &&
-                  new Date(r.data).toLocaleDateString('pt-BR') === evento.data
-                )
-                return (
-                  <td key={i} style={{ textAlign: 'center' }}>
-                    {reg ? (reg[campo] ? '✅' : '❌') : '-'}
-                  </td>
-                )
-              })}
+      {eventos.length > 0 && (
+        <table border="1" cellPadding="8" style={{ marginTop: '10px' }}>
+          <thead>
+            <tr>
+              <th>Aluno</th>
+              {eventos.map((e, i) => (
+                <th key={i}>{e.descricao}<br /><small>{e.data}</small></th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {alunos.map(aluno => (
+              <tr key={aluno.id}>
+                <td>{aluno.nome}</td>
+                {eventos.map((evento, i) => {
+                  const reg = registros.find(r =>
+                    r.aluno_id === aluno.id &&
+                    r.descricao === evento.descricao &&
+                    new Date(r.data).toLocaleDateString('pt-BR') === evento.data
+                  )
+                  return (
+                    <td key={i} style={{ textAlign: 'center' }}>
+                      {reg ? (reg[campo] ? '✅' : '❌') : '-'}
+                    </td>
+                  )
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
       <div style={{ marginTop: '20px' }}>
         <h3>Novo registro</h3>
