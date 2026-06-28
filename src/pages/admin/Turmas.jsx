@@ -42,12 +42,10 @@ export default function Turmas() {
       setErro('Preencha todos os campos')
       return
     }
-
     setCarregando(true)
     const { error } = await supabase
       .from('turmas')
       .insert({ nome, ano_serie: anoSerie, tipo, periodo_ativo: 1 })
-
     if (error) {
       setErro('Erro ao cadastrar turma')
     } else {
@@ -65,10 +63,7 @@ export default function Turmas() {
       alert('Ja esta no ultimo periodo do ano!')
       return
     }
-    await supabase
-      .from('turmas')
-      .update({ periodo_ativo: turma.periodo_ativo + 1 })
-      .eq('id', turma.id)
+    await supabase.from('turmas').update({ periodo_ativo: turma.periodo_ativo + 1 }).eq('id', turma.id)
     buscarTurmas()
   }
 
@@ -77,21 +72,14 @@ export default function Turmas() {
       alert('Ja esta no primeiro periodo!')
       return
     }
-    await supabase
-      .from('turmas')
-      .update({ periodo_ativo: turma.periodo_ativo - 1 })
-      .eq('id', turma.id)
+    await supabase.from('turmas').update({ periodo_ativo: turma.periodo_ativo - 1 }).eq('id', turma.id)
     buscarTurmas()
   }
 
   async function vincularProfessor(turmaId) {
     const profId = professorSelecionado[turmaId]
     if (!profId) return
-
-    const { error } = await supabase
-      .from('turma_professor')
-      .insert({ turma_id: turmaId, professor_id: profId })
-
+    const { error } = await supabase.from('turma_professor').insert({ turma_id: turmaId, professor_id: profId })
     if (error) {
       alert('Erro ao vincular professor')
     } else {
@@ -101,11 +89,7 @@ export default function Turmas() {
   }
 
   async function desvincularProfessor(turmaId, profId) {
-    await supabase
-      .from('turma_professor')
-      .delete()
-      .eq('turma_id', turmaId)
-      .eq('professor_id', profId)
+    await supabase.from('turma_professor').delete().eq('turma_id', turmaId).eq('professor_id', profId)
     buscarTurmas()
   }
 
@@ -166,21 +150,15 @@ export default function Turmas() {
                 <td>{turma.ano_serie}</td>
                 <td>{turma.tipo === 'eja' ? 'EJA' : 'Diurno'}</td>
                 <td>
-                  {labelPeriodo(turma)}
-                  <button onClick={() => retrocederPeriodo(turma)} style={{ marginRight: '5px' }}>
-                    ←
-                 </button>
-                 <button onClick={() => avancarPeriodo(turma)}>
-                   →
-                </button>
+                  <button onClick={() => retrocederPeriodo(turma)}>←</button>
+                  <span style={{ margin: '0 8px' }}>{labelPeriodo(turma)}</span>
+                  <button onClick={() => avancarPeriodo(turma)}>→</button>
                 </td>
                 <td>
                   {turma.turma_professor?.map(tp => (
                     <div key={tp.professor_id}>
                       {tp.usuarios?.nome}
-                      <button onClick={() => desvincularProfessor(turma.id, tp.professor_id)}>
-                        Remover
-                      </button>
+                      <button onClick={() => desvincularProfessor(turma.id, tp.professor_id)}>Remover</button>
                     </div>
                   ))}
                   {turma.turma_professor?.length === 0 && <span>Sem professor</span>}
@@ -198,10 +176,8 @@ export default function Turmas() {
                   <button onClick={() => vincularProfessor(turma.id)}>Vincular</button>
                 </td>
                 <td>
-                   <button onClick={() => navigate(`/admin/turmas/${turma.id}/conteudos`)} style={{ marginRight: '5px' }}>
-                     Conteudos
-                       </button>
-                       <button onClick={() => apagarTurma(turma.id)}>Apagar</button>
+                  <button onClick={() => navigate(`/admin/turmas/${turma.id}/conteudos`)} style={{ marginRight: '5px' }}>Conteudos</button>
+                  <button onClick={() => apagarTurma(turma.id)}>Apagar</button>
                 </td>
               </tr>
             ))}
