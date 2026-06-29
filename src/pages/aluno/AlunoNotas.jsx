@@ -247,7 +247,7 @@ export default function AlunoNotas() {
               </>
             )}
 
-            {p.exercicios.length > 0 && (
+            {p.ativo && p.exercicios.length > 0 && (
               <>
                 <h3>Listas Digitais</h3>
                 {p.exercicios.map((c, i) => (
