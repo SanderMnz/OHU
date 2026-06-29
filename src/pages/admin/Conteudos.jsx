@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import MenuAdmin from '../../components/MenuAdmin'
+import Layout from '../../components/Layout'
+import { Titulo, Subtitulo, Botao, Input, Tabela, Erro } from '../../components/UI'
 import { supabase } from '../../lib/supabase'
 
 export default function Conteudos() {
@@ -13,37 +15,18 @@ export default function Conteudos() {
   const navigate = useNavigate()
 
   async function buscarConteudos() {
-    const { data } = await supabase
-      .from('conteudos')
-      .select('*')
-      .order('ordem')
+    const { data } = await supabase.from('conteudos').select('*').order('ordem')
     setConteudos(data || [])
   }
 
-  useEffect(() => {
-    buscarConteudos()
-  }, [])
+  useEffect(() => { buscarConteudos() }, [])
 
   async function cadastrarConteudo() {
     setErro('')
-    if (!titulo || !ordem) {
-      setErro('Preencha titulo e ordem')
-      return
-    }
-
+    if (!titulo || !ordem) { setErro('Preencha titulo e ordem'); return }
     setCarregando(true)
-    const { error } = await supabase
-      .from('conteudos')
-      .insert({ titulo, descricao, ordem: parseInt(ordem) })
-
-    if (error) {
-      setErro('Erro ao cadastrar conteudo')
-    } else {
-      setTitulo('')
-      setDescricao('')
-      setOrdem('')
-      buscarConteudos()
-    }
+    const { error } = await supabase.from('conteudos').insert({ titulo, descricao, ordem: parseInt(ordem) })
+    if (error) { setErro('Erro ao cadastrar conteudo') } else { setTitulo(''); setDescricao(''); setOrdem(''); buscarConteudos() }
     setCarregando(false)
   }
 
@@ -53,59 +36,37 @@ export default function Conteudos() {
   }
 
   return (
-    <div style={{ display: 'flex' }}>
-      <MenuAdmin />
-      <div style={{ padding: '20px' }}>
-        <h1>Conteudos</h1>
+    <Layout menu={<MenuAdmin />}>
+      <Titulo>Conteudos</Titulo>
 
-        <h2>Cadastrar novo conteudo</h2>
-        <input
-          placeholder="Titulo"
-          value={titulo}
-          onChange={(e) => setTitulo(e.target.value)}
-        />
-        <input
-          placeholder="Descricao (opcional)"
-          value={descricao}
-          onChange={(e) => setDescricao(e.target.value)}
-        />
-        <input
-          placeholder="Ordem (1, 2, 3...)"
-          type="number"
-          value={ordem}
-          onChange={(e) => setOrdem(e.target.value)}
-        />
-        <button onClick={cadastrarConteudo} disabled={carregando}>
-          {carregando ? 'Salvando...' : 'Cadastrar'}
-        </button>
-        {erro && <p style={{ color: 'red' }}>{erro}</p>}
-
-        <h2>Conteudos cadastrados</h2>
-        {conteudos.length === 0 && <p>Nenhum conteudo cadastrado ainda.</p>}
-        <table border="1" cellPadding="8">
-          <thead>
-            <tr>
-              <th>Ordem</th>
-              <th>Titulo</th>
-              <th>Descricao</th>
-              <th>Acoes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {conteudos.map((c) => (
-              <tr key={c.id}>
-                <td>{c.ordem}</td>
-                <td>{c.titulo}</td>
-                <td>{c.descricao || '-'}</td>
-                <td>
-                  <button onClick={() => navigate(`/admin/conteudos/${c.id}`)}>Editar</button>
-                  <button onClick={() => apagarConteudo(c.id)}>Apagar</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+        <Subtitulo>Cadastrar novo conteudo</Subtitulo>
+        <div className="flex gap-3 flex-wrap">
+          <Input placeholder="Titulo (ex: Equacoes do 1 grau)" value={titulo} onChange={(e) => setTitulo(e.target.value)} className="w-72" />
+          <Input placeholder="Descricao (opcional)" value={descricao} onChange={(e) => setDescricao(e.target.value)} className="w-64" />
+          <Input placeholder="Ordem (1, 2, 3...)" type="number" value={ordem} onChange={(e) => setOrdem(e.target.value)} className="w-32" />
+          <Botao onClick={cadastrarConteudo} disabled={carregando}>{carregando ? 'Salvando...' : 'Cadastrar'}</Botao>
+        </div>
+        <Erro>{erro}</Erro>
       </div>
-    </div>
+
+      <Subtitulo>Conteudos cadastrados</Subtitulo>
+      {conteudos.length === 0 && <p className="text-gray-400">Nenhum conteudo cadastrado ainda.</p>}
+      <Tabela cabecalho={['Ordem', 'Titulo', 'Descricao', 'Acoes']}>
+        {conteudos.map(c => (
+          <tr key={c.id} className="hover:bg-gray-50">
+            <td className="px-4 py-3 text-gray-500">{c.ordem}</td>
+            <td className="px-4 py-3 font-medium">{c.titulo}</td>
+            <td className="px-4 py-3 text-gray-500">{c.descricao || '-'}</td>
+            <td className="px-4 py-3">
+              <div className="flex gap-2">
+                <Botao onClick={() => navigate(`/admin/conteudos/${c.id}`)} variante="secondary">Editar</Botao>
+                <Botao onClick={() => apagarConteudo(c.id)} variante="danger">Apagar</Botao>
+              </div>
+            </td>
+          </tr>
+        ))}
+      </Tabela>
+    </Layout>
   )
 }

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import MenuAdmin from '../../components/MenuAdmin'
+import Layout from '../../components/Layout'
+import { Titulo, Subtitulo, Botao, Input, Select, Tabela, Erro } from '../../components/UI'
 import { supabase, supabaseAdmin } from '../../lib/supabase'
 
 export default function Professores() {
@@ -22,10 +24,7 @@ export default function Professores() {
   }
 
   async function buscarTurmas() {
-    const { data } = await supabase
-      .from('turmas')
-      .select('*')
-      .order('nome')
+    const { data } = await supabase.from('turmas').select('*').order('nome')
     setTurmas(data || [])
   }
 
@@ -36,46 +35,14 @@ export default function Professores() {
 
   async function cadastrarProfessor() {
     setErro('')
-    if (!nome || !username || !senha) {
-      setErro('Preencha todos os campos')
-      return
-    }
-
+    if (!nome || !username || !senha) { setErro('Preencha todos os campos'); return }
     setCarregando(true)
-
     const email = `${username}@ohu.app`
-
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password: senha,
-      email_confirm: true
-    })
-
-    if (authError) {
-      setErro('Erro ao cadastrar: ' + authError.message)
-      setCarregando(false)
-      return
-    }
-
-    await supabase.from('usuarios').insert({
-      id: authData.user.id,
-      nome,
-      email,
-      username,
-      tipo: 'professor'
-    })
-
-    if (turmaSelecionada) {
-      await supabase.from('turma_professor').insert({
-        turma_id: turmaSelecionada,
-        professor_id: authData.user.id
-      })
-    }
-
-    setNome('')
-    setUsername('')
-    setSenha('')
-    setTurmaSelecionada('')
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({ email, password: senha, email_confirm: true })
+    if (authError) { setErro('Erro ao cadastrar: ' + authError.message); setCarregando(false); return }
+    await supabase.from('usuarios').insert({ id: authData.user.id, nome, email, username, tipo: 'professor' })
+    if (turmaSelecionada) await supabase.from('turma_professor').insert({ turma_id: turmaSelecionada, professor_id: authData.user.id })
+    setNome(''); setUsername(''); setSenha(''); setTurmaSelecionada('')
     buscarProfessores()
     setCarregando(false)
   }
@@ -86,71 +53,44 @@ export default function Professores() {
   }
 
   return (
-    <div style={{ display: 'flex' }}>
-      <MenuAdmin />
-      <div style={{ padding: '20px' }}>
-        <h1>Professores</h1>
+    <Layout menu={<MenuAdmin />}>
+      <Titulo>Professores</Titulo>
 
-        <h2>Cadastrar novo professor</h2>
-        <input
-          placeholder="Nome completo"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-        />
-        <input
-          placeholder="Nome de usuario (ex: profjoao)"
-          value={username}
-          onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s/g, ''))}
-        />
-        <input
-          placeholder="Senha inicial"
-          type="password"
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
-        />
-        <select
-          value={turmaSelecionada}
-          onChange={(e) => setTurmaSelecionada(e.target.value)}
-        >
-          <option value="">Selecione uma turma (opcional)</option>
-          {turmas.map((turma) => (
-            <option key={turma.id} value={turma.id}>{turma.nome}</option>
-          ))}
-        </select>
-        <button onClick={cadastrarProfessor} disabled={carregando}>
-          {carregando ? 'Salvando...' : 'Cadastrar'}
-        </button>
-        {erro && <p style={{ color: 'red' }}>{erro}</p>}
-
-        <h2>Professores cadastrados</h2>
-        {professores.length === 0 && <p>Nenhum professor cadastrado ainda.</p>}
-        <table border="1" cellPadding="8">
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>Usuario</th>
-              <th>Turma</th>
-              <th>Acoes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {professores.map((prof) => (
-              <tr key={prof.id}>
-                <td>{prof.nome}</td>
-                <td>{prof.username}</td>
-                <td>
-                    {prof.turma_professor?.length > 0
-                      ? prof.turma_professor.map(tp => tp.turmas?.nome).join(', ')
-                     : 'Sem turma'}
-                </td>
-                <td>
-                  <button onClick={() => apagarProfessor(prof.id)}>Apagar</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+        <Subtitulo>Cadastrar novo professor</Subtitulo>
+        <div className="flex gap-3 flex-wrap">
+          <Input placeholder="Nome completo" value={nome} onChange={(e) => setNome(e.target.value)} />
+          <Input placeholder="Nome de usuario (ex: profjoao)" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s/g, ''))} />
+          <Input placeholder="Senha inicial" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} />
+          <Select value={turmaSelecionada} onChange={(e) => setTurmaSelecionada(e.target.value)}>
+            <option value="">Turma (opcional)</option>
+            {turmas.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
+          </Select>
+          <Botao onClick={cadastrarProfessor} disabled={carregando}>
+            {carregando ? 'Salvando...' : 'Cadastrar'}
+          </Botao>
+        </div>
+        <Erro>{erro}</Erro>
       </div>
-    </div>
+
+      <Subtitulo>Professores cadastrados</Subtitulo>
+      {professores.length === 0 && <p className="text-gray-400">Nenhum professor cadastrado ainda.</p>}
+      <Tabela cabecalho={['Nome', 'Usuario', 'Turmas', 'Acoes']}>
+        {professores.map(prof => (
+          <tr key={prof.id} className="hover:bg-gray-50">
+            <td className="px-4 py-3 font-medium">{prof.nome}</td>
+            <td className="px-4 py-3 text-gray-500">{prof.username}</td>
+            <td className="px-4 py-3">
+              {prof.turma_professor?.length > 0
+                ? prof.turma_professor.map(tp => tp.turmas?.nome).join(', ')
+                : <span className="text-gray-400">Sem turma</span>}
+            </td>
+            <td className="px-4 py-3">
+              <Botao onClick={() => apagarProfessor(prof.id)} variante="danger">Apagar</Botao>
+            </td>
+          </tr>
+        ))}
+      </Tabela>
+    </Layout>
   )
 }
