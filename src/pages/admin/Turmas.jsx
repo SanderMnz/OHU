@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import MenuAdmin from '../../components/MenuAdmin'
+import Layout from '../../components/Layout'
+import { Titulo, Subtitulo, Botao, Input, Select, Tabela, Erro } from '../../components/UI'
 import { supabase } from '../../lib/supabase'
 
 export default function Turmas() {
@@ -38,40 +40,22 @@ export default function Turmas() {
 
   async function cadastrarTurma() {
     setErro('')
-    if (!nome || !anoSerie) {
-      setErro('Preencha todos os campos')
-      return
-    }
+    if (!nome || !anoSerie) { setErro('Preencha todos os campos'); return }
     setCarregando(true)
-    const { error } = await supabase
-      .from('turmas')
-      .insert({ nome, ano_serie: anoSerie, tipo, periodo_ativo: 1 })
-    if (error) {
-      setErro('Erro ao cadastrar turma')
-    } else {
-      setNome('')
-      setAnoSerie('')
-      setTipo('diurno')
-      buscarTurmas()
-    }
+    const { error } = await supabase.from('turmas').insert({ nome, ano_serie: anoSerie, tipo, periodo_ativo: 1 })
+    if (error) { setErro('Erro ao cadastrar turma') } else { setNome(''); setAnoSerie(''); setTipo('diurno'); buscarTurmas() }
     setCarregando(false)
   }
 
   async function avancarPeriodo(turma) {
     const maximo = turma.tipo === 'eja' ? 3 : 4
-    if (turma.periodo_ativo >= maximo) {
-      alert('Ja esta no ultimo periodo do ano!')
-      return
-    }
+    if (turma.periodo_ativo >= maximo) { alert('Ja esta no ultimo periodo!'); return }
     await supabase.from('turmas').update({ periodo_ativo: turma.periodo_ativo + 1 }).eq('id', turma.id)
     buscarTurmas()
   }
 
   async function retrocederPeriodo(turma) {
-    if (turma.periodo_ativo <= 1) {
-      alert('Ja esta no primeiro periodo!')
-      return
-    }
+    if (turma.periodo_ativo <= 1) { alert('Ja esta no primeiro periodo!'); return }
     await supabase.from('turmas').update({ periodo_ativo: turma.periodo_ativo - 1 }).eq('id', turma.id)
     buscarTurmas()
   }
@@ -80,12 +64,7 @@ export default function Turmas() {
     const profId = professorSelecionado[turmaId]
     if (!profId) return
     const { error } = await supabase.from('turma_professor').insert({ turma_id: turmaId, professor_id: profId })
-    if (error) {
-      alert('Erro ao vincular professor')
-    } else {
-      setProfessorSelecionado({ ...professorSelecionado, [turmaId]: '' })
-      buscarTurmas()
-    }
+    if (error) { alert('Erro ao vincular professor') } else { setProfessorSelecionado({ ...professorSelecionado, [turmaId]: '' }); buscarTurmas() }
   }
 
   async function desvincularProfessor(turmaId, profId) {
@@ -104,86 +83,72 @@ export default function Turmas() {
   }
 
   return (
-    <div style={{ display: 'flex' }}>
-      <MenuAdmin />
-      <div style={{ padding: '20px' }}>
-        <h1>Turmas</h1>
+    <Layout menu={<MenuAdmin />}>
+      <Titulo>Turmas</Titulo>
 
-        <h2>Cadastrar nova turma</h2>
-        <input
-          placeholder="Nome da turma (ex: 1904)"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-        />
-        <input
-          placeholder="Ano/Serie (ex: 9 ano)"
-          value={anoSerie}
-          onChange={(e) => setAnoSerie(e.target.value)}
-        />
-        <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
-          <option value="diurno">Diurno (4 bimestres)</option>
-          <option value="eja">EJA (3 trimestres)</option>
-        </select>
-        <button onClick={cadastrarTurma} disabled={carregando}>
-          {carregando ? 'Salvando...' : 'Cadastrar'}
-        </button>
-        {erro && <p style={{ color: 'red' }}>{erro}</p>}
-
-        <h2>Turmas cadastradas</h2>
-        {turmas.length === 0 && <p>Nenhuma turma cadastrada ainda.</p>}
-        <table border="1" cellPadding="8">
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>Ano/Serie</th>
-              <th>Tipo</th>
-              <th>Periodo Ativo</th>
-              <th>Professores</th>
-              <th>Vincular Professor</th>
-              <th>Acoes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {turmas.map((turma) => (
-              <tr key={turma.id}>
-                <td>{turma.nome}</td>
-                <td>{turma.ano_serie}</td>
-                <td>{turma.tipo === 'eja' ? 'EJA' : 'Diurno'}</td>
-                <td>
-                  <button onClick={() => retrocederPeriodo(turma)}>←</button>
-                  <span style={{ margin: '0 8px' }}>{labelPeriodo(turma)}</span>
-                  <button onClick={() => avancarPeriodo(turma)}>→</button>
-                </td>
-                <td>
-                  {turma.turma_professor?.map(tp => (
-                    <div key={tp.professor_id}>
-                      {tp.usuarios?.nome}
-                      <button onClick={() => desvincularProfessor(turma.id, tp.professor_id)}>Remover</button>
-                    </div>
-                  ))}
-                  {turma.turma_professor?.length === 0 && <span>Sem professor</span>}
-                </td>
-                <td>
-                  <select
-                    value={professorSelecionado[turma.id] || ''}
-                    onChange={(e) => setProfessorSelecionado({ ...professorSelecionado, [turma.id]: e.target.value })}
-                  >
-                    <option value="">Selecione</option>
-                    {professores.map(p => (
-                      <option key={p.id} value={p.id}>{p.nome}</option>
-                    ))}
-                  </select>
-                  <button onClick={() => vincularProfessor(turma.id)}>Vincular</button>
-                </td>
-                <td>
-                  <button onClick={() => navigate(`/admin/turmas/${turma.id}/conteudos`)} style={{ marginRight: '5px' }}>Conteudos</button>
-                  <button onClick={() => apagarTurma(turma.id)}>Apagar</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+        <Subtitulo>Cadastrar nova turma</Subtitulo>
+        <div className="flex gap-3 flex-wrap">
+          <Input placeholder="Nome (ex: 1904)" value={nome} onChange={(e) => setNome(e.target.value)} />
+          <Input placeholder="Ano/Serie (ex: 9 ano)" value={anoSerie} onChange={(e) => setAnoSerie(e.target.value)} />
+          <Select value={tipo} onChange={(e) => setTipo(e.target.value)}>
+            <option value="diurno">Diurno (4 bimestres)</option>
+            <option value="eja">EJA (3 trimestres)</option>
+          </Select>
+          <Botao onClick={cadastrarTurma} disabled={carregando}>
+            {carregando ? 'Salvando...' : 'Cadastrar'}
+          </Botao>
+        </div>
+        <Erro>{erro}</Erro>
       </div>
-    </div>
+
+      <Subtitulo>Turmas cadastradas</Subtitulo>
+      {turmas.length === 0 && <p className="text-gray-400">Nenhuma turma cadastrada ainda.</p>}
+
+      <Tabela cabecalho={['Nome', 'Ano/Serie', 'Tipo', 'Periodo Ativo', 'Professores', 'Vincular Professor', 'Acoes']}>
+        {turmas.map((turma) => (
+          <tr key={turma.id} className="hover:bg-gray-50">
+            <td className="px-4 py-3 font-medium">{turma.nome}</td>
+            <td className="px-4 py-3">{turma.ano_serie}</td>
+            <td className="px-4 py-3">{turma.tipo === 'eja' ? 'EJA' : 'Diurno'}</td>
+            <td className="px-4 py-3">
+              <div className="flex items-center gap-2">
+                <button onClick={() => retrocederPeriodo(turma)} className="w-7 h-7 rounded bg-gray-100 hover:bg-gray-200 font-bold">←</button>
+                <span className="text-sm font-medium">{labelPeriodo(turma)}</span>
+                <button onClick={() => avancarPeriodo(turma)} className="w-7 h-7 rounded bg-gray-100 hover:bg-gray-200 font-bold">→</button>
+              </div>
+            </td>
+            <td className="px-4 py-3">
+              {turma.turma_professor?.map(tp => (
+                <div key={tp.professor_id} className="flex items-center gap-2">
+                  <span className="text-sm">{tp.usuarios?.nome}</span>
+                  <button onClick={() => desvincularProfessor(turma.id, tp.professor_id)} className="text-xs text-red-500 hover:text-red-700">Remover</button>
+                </div>
+              ))}
+              {turma.turma_professor?.length === 0 && <span className="text-gray-400 text-sm">Sem professor</span>}
+            </td>
+            <td className="px-4 py-3">
+              <div className="flex gap-2">
+                <Select
+                  value={professorSelecionado[turma.id] || ''}
+                  onChange={(e) => setProfessorSelecionado({ ...professorSelecionado, [turma.id]: e.target.value })}
+                  className="text-sm"
+                >
+                  <option value="">Selecione</option>
+                  {professores.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                </Select>
+                <Botao onClick={() => vincularProfessor(turma.id)}>Vincular</Botao>
+              </div>
+            </td>
+            <td className="px-4 py-3">
+              <div className="flex gap-2">
+                <Botao onClick={() => navigate(`/admin/turmas/${turma.id}/conteudos`)} variante="secondary">Conteudos</Botao>
+                <Botao onClick={() => apagarTurma(turma.id)} variante="danger">Apagar</Botao>
+              </div>
+            </td>
+          </tr>
+        ))}
+      </Tabela>
+    </Layout>
   )
 }
