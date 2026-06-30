@@ -5,8 +5,8 @@ export default function MenuAluno() {
   const location = useLocation()
 
   const links = [
-    { to: '/aluno', label: 'Inicio' },
-    { to: '/aluno/conteudos', label: 'Conteudos' },
+    { to: '/aluno', label: 'Início' },
+    { to: '/aluno/conteudos', label: 'Conteúdos' },
     { to: '/aluno/notas', label: 'Minhas Notas' },
   ]
 

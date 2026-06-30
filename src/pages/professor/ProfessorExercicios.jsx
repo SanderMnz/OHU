@@ -76,7 +76,7 @@ export default function ProfessorExercicios() {
 
   return (
     <Layout menu={<MenuProfessor />}>
-      <Titulo>Exercicios dos Alunos</Titulo>
+      <Titulo>Exercícios dos Alunos</Titulo>
 
       <Select
         value={turmaSelecionada?.id || ''}
@@ -90,7 +90,7 @@ export default function ProfessorExercicios() {
 
       {relatorio.length > 0 && (
         <div className="mt-6">
-          <p className="text-xs text-gray-400 mb-3">🔴 Nenhuma lista feita neste conteudo &nbsp;|&nbsp; 🔵 Mais de 80% das listas feitas</p>
+          <p className="text-xs text-gray-400 mb-3">🔴 Nenhuma lista feita neste conteúdo &nbsp;|&nbsp; 🔵 Mais de 80% das listas feitas</p>
           <div className="overflow-x-auto rounded-xl border border-gray-200">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
@@ -133,12 +133,12 @@ export default function ProfessorExercicios() {
                       <tr key={`${aluno.id}-detalhes`}>
                         <td colSpan={conteudos.length + 2} className="bg-gray-50 p-4">
                           {tentativas.length === 0 ? (
-                            <p className="text-gray-400">Este aluno ainda nao fez nenhum exercicio.</p>
+                            <p className="text-gray-400">Este aluno ainda não fez nenhum exercício.</p>
                           ) : (
                             <table className="w-full text-sm bg-white rounded-lg overflow-hidden border border-gray-200">
                               <thead className="bg-gray-100 text-xs uppercase text-gray-500">
                                 <tr>
-                                  <th className="px-3 py-2 text-left">Conteudo</th>
+                                  <th className="px-3 py-2 text-left">Conteúdo</th>
                                   <th className="px-3 py-2 text-left">Lista</th>
                                   <th className="px-3 py-2 text-center">Tentativa</th>
                                   <th className="px-3 py-2 text-center">Acertos</th>

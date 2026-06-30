@@ -7,9 +7,9 @@ export default function MenuProfessor() {
   const links = [
     { to: '/professor', label: 'Painel' },
     { to: '/professor/turmas', label: 'Minhas Turmas' },
-    { to: '/professor/notas', label: 'Lancamento de Notas' },
-    { to: '/professor/relatorios', label: 'Relatorios' },
-    { to: '/professor/exercicios', label: 'Exercicios Alunos' },
+    { to: '/professor/notas', label: 'Lançamento de Notas' },
+    { to: '/professor/relatorios', label: 'Relatórios' },
+    { to: '/professor/exercicios', label: 'Exercícios Alunos' },
   ]
 
   return (

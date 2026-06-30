@@ -68,7 +68,7 @@ export default function Alunos() {
       await supabase.from('turma_aluno').insert({ turma_id: turmaCadastro, aluno_id: authData.user.id })
       sucesso++
     }
-    setResultadoImport(`Concluido: ${sucesso} cadastrados, ${falha} com erro. ${erros.join(' | ')}`)
+    setResultadoImport(`Concluído: ${sucesso} cadastrados, ${falha} com erro. ${erros.join(' | ')}`)
     buscarAlunos(turmaCadastro)
     setImportando(false)
   }
@@ -105,7 +105,7 @@ export default function Alunos() {
                 <Subtitulo>Cadastrar aluno na turma {turmaSelecionada.nome}</Subtitulo>
                 <div className="flex gap-3 flex-wrap">
                   <Input placeholder="Nome completo" value={nome} onChange={(e) => setNome(e.target.value)} />
-                  <Input placeholder="Nome de usuario" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s/g, ''))} />
+                  <Input placeholder="Nome de usuário" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s/g, ''))} />
                   <Input placeholder="Senha inicial" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} />
                   <Botao onClick={cadastrarAluno} disabled={carregando}>{carregando ? 'Salvando...' : 'Cadastrar'}</Botao>
                 </div>
@@ -124,7 +124,7 @@ export default function Alunos() {
 
               <Subtitulo>Alunos cadastrados ({alunos.length})</Subtitulo>
               {alunos.length === 0 && <p className="text-gray-400">Nenhum aluno nesta turma ainda.</p>}
-              <Tabela cabecalho={['Nome', 'Usuario', 'Acoes']}>
+              <Tabela cabecalho={['Nome', 'Usuário', 'Ações']}>
                 {alunos.map(aluno => (
                   <tr key={aluno.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium">{aluno.nome}</td>

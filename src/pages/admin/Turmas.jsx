@@ -49,13 +49,13 @@ export default function Turmas() {
 
   async function avancarPeriodo(turma) {
     const maximo = turma.tipo === 'eja' ? 3 : 4
-    if (turma.periodo_ativo >= maximo) { alert('Ja esta no ultimo periodo!'); return }
+    if (turma.periodo_ativo >= maximo) { alert('Já está no último período!'); return }
     await supabase.from('turmas').update({ periodo_ativo: turma.periodo_ativo + 1 }).eq('id', turma.id)
     buscarTurmas()
   }
 
   async function retrocederPeriodo(turma) {
-    if (turma.periodo_ativo <= 1) { alert('Ja esta no primeiro periodo!'); return }
+    if (turma.periodo_ativo <= 1) { alert('Já está no primeiro período!'); return }
     await supabase.from('turmas').update({ periodo_ativo: turma.periodo_ativo - 1 }).eq('id', turma.id)
     buscarTurmas()
   }
@@ -90,7 +90,7 @@ export default function Turmas() {
         <Subtitulo>Cadastrar nova turma</Subtitulo>
         <div className="flex gap-3 flex-wrap">
           <Input placeholder="Nome (ex: 1904)" value={nome} onChange={(e) => setNome(e.target.value)} />
-          <Input placeholder="Ano/Serie (ex: 9 ano)" value={anoSerie} onChange={(e) => setAnoSerie(e.target.value)} />
+          <Input placeholder="Ano/Série (ex: 9 ano)" value={anoSerie} onChange={(e) => setAnoSerie(e.target.value)} />
           <Select value={tipo} onChange={(e) => setTipo(e.target.value)}>
             <option value="diurno">Diurno (4 bimestres)</option>
             <option value="eja">EJA (3 trimestres)</option>
@@ -105,7 +105,7 @@ export default function Turmas() {
       <Subtitulo>Turmas cadastradas</Subtitulo>
       {turmas.length === 0 && <p className="text-gray-400">Nenhuma turma cadastrada ainda.</p>}
 
-      <Tabela cabecalho={['Nome', 'Ano/Serie', 'Tipo', 'Periodo Ativo', 'Professores', 'Vincular Professor', 'Acoes']}>
+      <Tabela cabecalho={['Nome', 'Ano/Série', 'Tipo', 'Período Ativo', 'Professores', 'Vincular Professor', 'Ações']}>
         {turmas.map((turma) => (
           <tr key={turma.id} className="hover:bg-gray-50">
             <td className="px-4 py-3 font-medium">{turma.nome}</td>
@@ -142,7 +142,7 @@ export default function Turmas() {
             </td>
             <td className="px-4 py-3">
               <div className="flex gap-2">
-                <Botao onClick={() => navigate(`/admin/turmas/${turma.id}/conteudos`)} variante="secondary">Conteudos</Botao>
+                <Botao onClick={() => navigate(`/admin/turmas/${turma.id}/conteudos`)} variante="secondary">Conteúdos</Botao>
                 <Botao onClick={() => apagarTurma(turma.id)} variante="danger">Apagar</Botao>
               </div>
             </td>

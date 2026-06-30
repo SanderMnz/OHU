@@ -20,7 +20,7 @@ export default function Login() {
     })
 
     if (error) {
-      setErro('Usuario ou senha incorretos')
+      setErro('Usuário ou senha incorretos')
     }
 
     setCarregando(false)
@@ -38,11 +38,11 @@ export default function Login() {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Usuario ou email
+              Usuário ou email
             </label>
             <input
               type="text"
-              placeholder="Digite seu usuario ou email"
+              placeholder="Digite seu usuário ou email"
               value={identificacao}
               onChange={(e) => setIdentificacao(e.target.value)}
               className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"

@@ -28,12 +28,12 @@ export default function ProfessorNotas() {
     { id: 'provas', label: 'Provas' },
     { id: 'adr', label: 'ADR' },
     { id: 'miniteste', label: 'Miniteste' },
-    { id: 'participacao', label: 'Participacao' },
+    { id: 'participacao', label: 'Participação' },
   ]
 
   return (
     <Layout menu={<MenuProfessor />}>
-      <Titulo>Lancamento de Notas</Titulo>
+      <Titulo>Lançamento de Notas</Titulo>
 
       <div className="flex items-center gap-4 mb-6">
         <Select
@@ -44,7 +44,7 @@ export default function ProfessorNotas() {
           {turmas.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
         </Select>
         {turmaSelecionada && (
-          <span className="text-blue-600 font-semibold">Periodo ativo: {labelPeriodo(turmaSelecionada)}</span>
+          <span className="text-blue-600 font-semibold">Período ativo: {labelPeriodo(turmaSelecionada)}</span>
         )}
       </div>
 
@@ -149,7 +149,7 @@ function AbaProvas({ turma }) {
       </div>
 
       {provas.length > 0 && (
-        <Tabela cabecalho={['Nome', 'Data', 'Acoes']}>
+        <Tabela cabecalho={['Nome', 'Data', 'Ações']}>
           {provas.map(p => (
             <tr key={p.id} className={provaSelecionada === p.id ? 'bg-blue-50' : 'hover:bg-gray-50'}>
               <td className="px-4 py-3">
@@ -179,7 +179,7 @@ function AbaProvas({ turma }) {
 
       {provaSelecionada && (
         <div className="mt-6">
-          <h3 className="font-semibold text-gray-700 mb-3">Lancamento de notas: {provas.find(p => p.id === provaSelecionada)?.nome}</h3>
+          <h3 className="font-semibold text-gray-700 mb-3">Lançamento de notas: {provas.find(p => p.id === provaSelecionada)?.nome}</h3>
           <Tabela cabecalho={['Aluno', 'Nota (0-10)']}>
             {alunos.map(aluno => (
               <tr key={aluno.id} className="hover:bg-gray-50">
@@ -283,7 +283,7 @@ function AbaPresenca({ turma, tipo }) {
     }
     setDescricao(''); setPresencas({})
     buscarRegistros()
-    alert('Presenca registrada!')
+    alert('Presença registrada!')
   }
 
   const titulo = tipo === 'miniteste' ? 'Miniteste' : 'Participacao'
@@ -301,7 +301,7 @@ function AbaPresenca({ turma, tipo }) {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
         <h3 className="font-semibold text-gray-700 mb-3">Registrar {titulo}</h3>
         <div className="flex gap-3">
-          <Input placeholder="Descricao (ex: Miniteste 1 - Equacoes)" value={descricao} onChange={(e) => setDescricao(e.target.value)} className="w-96" />
+          <Input placeholder="Descrição (ex: Miniteste 1 - Equações)" value={descricao} onChange={(e) => setDescricao(e.target.value)} className="w-96" />
           <Botao onClick={salvarPresenca}>Registrar</Botao>
         </div>
 

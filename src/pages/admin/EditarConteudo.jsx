@@ -118,7 +118,7 @@ export default function EditarConteudo() {
   async function adicionarVideo() {
     if (!tituloVideo || !urlVideo) return
     const youtubeId = extrairIdYoutube(urlVideo)
-    if (!youtubeId) { setMensagem('URL do YouTube invalida'); return }
+    if (!youtubeId) { setMensagem('URL do YouTube inválida'); return }
     await supabase.from('conteudo_videos').insert({ conteudo_id: id, titulo: tituloVideo, url_youtube: youtubeId, ordem: videos.length + 1 })
     setTituloVideo(''); setUrlVideo('')
     buscarVideos()
@@ -131,7 +131,7 @@ export default function EditarConteudo() {
 
   async function adicionarLista() {
     if (!tituloLista) return
-    if (listas.length >= 5) { setMensagem('Maximo de 5 listas por conteudo'); return }
+    if (listas.length >= 5) { setMensagem('Máximo de 5 listas por conteúdo'); return }
     await supabase.from('listas').insert({ conteudo_id: id, numero: listas.length + 1, titulo: tituloLista })
     setTituloLista('')
     buscarListas()
@@ -150,25 +150,25 @@ export default function EditarConteudo() {
       <Titulo>{conteudo.titulo}</Titulo>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-        <Subtitulo>Explicacao</Subtitulo>
+        <Subtitulo>Explicação</Subtitulo>
         <p className="text-gray-400 text-xs mb-2">Para formulas: $x^2 + 2x + 1$ | Para imagens: clique em "Inserir imagem"</p>
-        <TextareaComImagem value={explicacao} onChange={(e) => setExplicacao(e.target.value)} placeholder="Digite a explicacao do conteudo aqui..." />
+        <TextareaComImagem value={explicacao} onChange={(e) => setExplicacao(e.target.value)} placeholder="Digite a explicação do conteúdo aqui..." />
 
         <Subtitulo>Exemplos resolvidos</Subtitulo>
         <TextareaComImagem value={exemplos} onChange={(e) => setExemplos(e.target.value)} placeholder="Digite os exemplos resolvidos aqui..." />
 
         <div className="mt-4">
-          <Botao onClick={salvarMaterial} disabled={salvando}>{salvando ? 'Salvando...' : 'Salvar explicacao e exemplos'}</Botao>
-          {mensagem.includes('Erro') || mensagem.includes('invalida') ? <Erro>{mensagem}</Erro> : <Sucesso>{mensagem}</Sucesso>}
+          <Botao onClick={salvarMaterial} disabled={salvando}>{salvando ? 'Salvando...' : 'Salvar explicação e exemplos'}</Botao>
+          {mensagem.includes('Erro') || mensagem.includes('inválida') ? <Erro>{mensagem}</Erro> : <Sucesso>{mensagem}</Sucesso>}
         </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-        <Subtitulo>Videos</Subtitulo>
+        <Subtitulo>Vídeos</Subtitulo>
         <div className="flex gap-3 flex-wrap mb-4">
-          <Input placeholder="Titulo do video" value={tituloVideo} onChange={(e) => setTituloVideo(e.target.value)} />
+          <Input placeholder="Título do vídeo" value={tituloVideo} onChange={(e) => setTituloVideo(e.target.value)} />
           <Input placeholder="URL do YouTube" value={urlVideo} onChange={(e) => setUrlVideo(e.target.value)} className="w-80" />
-          <Botao onClick={adicionarVideo}>Adicionar video</Botao>
+          <Botao onClick={adicionarVideo}>Adicionar vídeo</Botao>
         </div>
 
         {videos.map((v) => (
@@ -176,27 +176,27 @@ export default function EditarConteudo() {
             <p className="font-semibold mb-2">{v.titulo}</p>
             <iframe width="100%" height="315" src={`https://www.youtube.com/embed/${v.url_youtube}`} allowFullScreen className="rounded-lg" />
             <div className="mt-2">
-              <Botao onClick={() => apagarVideo(v.id)} variante="danger">Apagar video</Botao>
+              <Botao onClick={() => apagarVideo(v.id)} variante="danger">Apagar vídeo</Botao>
             </div>
           </div>
         ))}
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <Subtitulo>Listas de exercicios ({listas.length}/5)</Subtitulo>
+        <Subtitulo>Listas de exercícios ({listas.length}/5)</Subtitulo>
         <div className="flex gap-3 mb-4">
-          <Input placeholder="Titulo da lista (ex: Lista 1 - Basico)" value={tituloLista} onChange={(e) => setTituloLista(e.target.value)} className="w-80" />
+          <Input placeholder="Título da lista (ex: Lista 1 - Básico)" value={tituloLista} onChange={(e) => setTituloLista(e.target.value)} className="w-80" />
           <Botao onClick={adicionarLista} disabled={listas.length >= 5}>Adicionar lista</Botao>
         </div>
 
-        <Tabela cabecalho={['Lista', 'Titulo', 'Acoes']}>
+        <Tabela cabecalho={['Lista', 'Título', 'Ações']}>
           {listas.map((l) => (
             <tr key={l.id} className="hover:bg-gray-50">
               <td className="px-4 py-3">{l.numero}</td>
               <td className="px-4 py-3 font-medium">{l.titulo}</td>
               <td className="px-4 py-3">
                 <div className="flex gap-2">
-                  <Botao onClick={() => navigate(`/admin/conteudos/${id}/lista/${l.id}`)} variante="secondary">Editar questoes</Botao>
+                  <Botao onClick={() => navigate(`/admin/conteudos/${id}/lista/${l.id}`)} variante="secondary">Editar questões</Botao>
                   <Botao onClick={() => apagarLista(l.id)} variante="danger">Apagar</Botao>
                 </div>
               </td>

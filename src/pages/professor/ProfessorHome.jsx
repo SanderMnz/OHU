@@ -14,8 +14,8 @@ export default function ProfessorHome() {
           <p className="text-gray-400 text-sm mt-1">Veja suas turmas e alunos</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-700">Lancamento de Notas</h2>
-          <p className="text-gray-400 text-sm mt-1">Provas, ADR, miniteste e participacao</p>
+          <h2 className="text-lg font-semibold text-gray-700">Lançamento de Notas</h2>
+          <p className="text-gray-400 text-sm mt-1">Provas, ADR, miniteste e participação</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
           <h2 className="text-lg font-semibold text-gray-700">Relatorios</h2>

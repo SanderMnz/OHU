@@ -23,10 +23,10 @@ export default function Conteudos() {
 
   async function cadastrarConteudo() {
     setErro('')
-    if (!titulo || !ordem) { setErro('Preencha titulo e ordem'); return }
+    if (!titulo || !ordem) { setErro('Preencha título e ordem'); return }
     setCarregando(true)
     const { error } = await supabase.from('conteudos').insert({ titulo, descricao, ordem: parseInt(ordem) })
-    if (error) { setErro('Erro ao cadastrar conteudo') } else { setTitulo(''); setDescricao(''); setOrdem(''); buscarConteudos() }
+    if (error) { setErro('Erro ao cadastrar conteúdo') } else { setTitulo(''); setDescricao(''); setOrdem(''); buscarConteudos() }
     setCarregando(false)
   }
 
@@ -37,22 +37,22 @@ export default function Conteudos() {
 
   return (
     <Layout menu={<MenuAdmin />}>
-      <Titulo>Conteudos</Titulo>
+      <Titulo>Conteúdos</Titulo>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
-        <Subtitulo>Cadastrar novo conteudo</Subtitulo>
+        <Subtitulo>Cadastrar novo conteúdo</Subtitulo>
         <div className="flex gap-3 flex-wrap">
-          <Input placeholder="Titulo (ex: Equacoes do 1 grau)" value={titulo} onChange={(e) => setTitulo(e.target.value)} className="w-72" />
-          <Input placeholder="Descricao (opcional)" value={descricao} onChange={(e) => setDescricao(e.target.value)} className="w-64" />
+          <Input placeholder="Título (ex: Equações do 1 grau)" value={titulo} onChange={(e) => setTitulo(e.target.value)} className="w-72" />
+          <Input placeholder="Descrição (opcional)" value={descricao} onChange={(e) => setDescricao(e.target.value)} className="w-64" />
           <Input placeholder="Ordem (1, 2, 3...)" type="number" value={ordem} onChange={(e) => setOrdem(e.target.value)} className="w-32" />
           <Botao onClick={cadastrarConteudo} disabled={carregando}>{carregando ? 'Salvando...' : 'Cadastrar'}</Botao>
         </div>
         <Erro>{erro}</Erro>
       </div>
 
-      <Subtitulo>Conteudos cadastrados</Subtitulo>
-      {conteudos.length === 0 && <p className="text-gray-400">Nenhum conteudo cadastrado ainda.</p>}
-      <Tabela cabecalho={['Ordem', 'Titulo', 'Descricao', 'Acoes']}>
+      <Subtitulo>Conteúdos cadastrados</Subtitulo>
+      {conteudos.length === 0 && <p className="text-gray-400">Nenhum conteúdo cadastrado ainda.</p>}
+      <Tabela cabecalho={['Ordem', 'Título', 'Descrição', 'Ações']}>
         {conteudos.map(c => (
           <tr key={c.id} className="hover:bg-gray-50">
             <td className="px-4 py-3 text-gray-500">{c.ordem}</td>

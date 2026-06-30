@@ -71,7 +71,7 @@ export default function ProfessorRelatorios() {
   async function salvarNota(alunoId, campo, provaId, valor) {
     if (valor === undefined || valor === '') return
     const nota = parseFloat(valor)
-    if (isNaN(nota) || nota < 0 || nota > 10) { alert('Nota invalida. Digite um valor entre 0 e 10.'); return }
+    if (isNaN(nota) || nota < 0 || nota > 10) { alert('Nota inválida. Digite um valor entre 0 e 10.'); return }
 
     if (provaId) {
       const linha = relatorio.find(r => r.aluno.id === alunoId)
@@ -102,7 +102,7 @@ export default function ProfessorRelatorios() {
 
   return (
     <Layout menu={<MenuProfessor />}>
-      <Titulo>Relatorios</Titulo>
+      <Titulo>Relatórios</Titulo>
 
       <div className="flex items-center gap-4 mb-6">
         <Select
@@ -112,25 +112,25 @@ export default function ProfessorRelatorios() {
           <option value="">Selecione a turma</option>
           {turmas.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
         </Select>
-        {turmaSelecionada && <span className="text-blue-600 font-semibold">Periodo ativo: {labelPeriodo(turmaSelecionada)}</span>}
+        {turmaSelecionada && <span className="text-blue-600 font-semibold">Período ativo: {labelPeriodo(turmaSelecionada)}</span>}
       </div>
 
       {carregando && <p className="text-gray-400">Carregando...</p>}
 
       {destaques && relatorio.length > 0 && (
         <div className="mb-6 p-5 bg-yellow-50 border border-yellow-200 rounded-xl">
-          <h3 className="font-semibold text-gray-700 mb-3">Destaques do periodo</h3>
+          <h3 className="font-semibold text-gray-700 mb-3">Destaques do período</h3>
           <div className="flex gap-8 flex-wrap text-sm">
             <div>
               <p className="font-semibold mb-1">🏆 Top 3 em notas</p>
               {destaques.top3.map((id, i) => {
                 const linha = relatorio.find(r => r.aluno.id === id)
-                return <div key={id} className="text-gray-600">{i + 1}º {linha?.aluno.nome} — media {linha?.mediaGeral}</div>
+                return <div key={id} className="text-gray-600">{i + 1}º {linha?.aluno.nome} — média {linha?.mediaGeral}</div>
               })}
             </div>
             {destaques.melhorPart && (
               <div>
-                <p className="font-semibold mb-1">🙋 Maior participacao</p>
+                <p className="font-semibold mb-1">🙋 Maior participação</p>
                 <div className="text-gray-600">{destaques.melhorPart.aluno.nome} — {destaques.melhorPart.notaPart}</div>
               </div>
             )}
@@ -146,7 +146,7 @@ export default function ProfessorRelatorios() {
 
       {relatorio.length > 0 && (
         <div>
-          <p className="text-gray-400 text-xs mb-2">Clique no campo para editar. A nota e salva automaticamente ao sair do campo.</p>
+          <p className="text-gray-400 text-xs mb-2">Clique no campo para editar. A nota é salva automaticamente ao sair do campo.</p>
           <div className="overflow-x-auto rounded-xl border border-gray-200">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
@@ -160,7 +160,7 @@ export default function ProfessorRelatorios() {
                   ))}
                   <th className="px-4 py-3 text-center">ADR</th>
                   <th className="px-4 py-3 text-center">Miniteste</th>
-                  <th className="px-4 py-3 text-center">Participacao</th>
+                  <th className="px-4 py-3 text-center">Participação</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">

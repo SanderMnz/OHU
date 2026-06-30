@@ -59,11 +59,11 @@ export default function TurmaConteudos() {
   return (
     <Layout menu={<MenuAdmin />}>
       <Botao onClick={() => navigate('/admin/turmas')} variante="secondary">← Voltar</Botao>
-      <Titulo>Conteudos da Turma {turma.nome}</Titulo>
-      <p className="text-gray-500 mb-6">Periodo ativo: <span className="font-semibold text-blue-600">{labelPeriodo(turma)}</span></p>
+      <Titulo>Conteúdos da Turma {turma.nome}</Titulo>
+      <p className="text-gray-500 mb-6">Período ativo: <span className="font-semibold text-blue-600">{labelPeriodo(turma)}</span></p>
 
-      <Subtitulo>Selecione os conteudos do periodo</Subtitulo>
-      <p className="text-gray-400 text-sm mb-4">Clique em um conteudo para vincular ou desvincular da turma neste periodo.</p>
+      <Subtitulo>Selecione os conteúdos do período</Subtitulo>
+      <p className="text-gray-400 text-sm mb-4">Clique em um conteúdo para vincular ou desvincular da turma neste período.</p>
 
       <div className="flex flex-wrap gap-4 mb-8">
         {todosConteudos.map(c => {
@@ -85,11 +85,11 @@ export default function TurmaConteudos() {
         })}
       </div>
 
-      <Subtitulo>Conteudos vinculados neste periodo</Subtitulo>
+      <Subtitulo>Conteúdos vinculados neste período</Subtitulo>
       {conteudosVinculados.filter(v => v.bimestre === turma.periodo_ativo).length === 0 && (
-        <p className="text-gray-400">Nenhum conteudo vinculado ainda.</p>
+        <p className="text-gray-400">Nenhum conteúdo vinculado ainda.</p>
       )}
-      <Tabela cabecalho={['Ordem', 'Conteudo', 'Acoes']}>
+      <Tabela cabecalho={['Ordem', 'Conteúdo', 'Ações']}>
         {conteudosVinculados.filter(v => v.bimestre === turma.periodo_ativo).map(v => (
           <tr key={v.id} className="hover:bg-gray-50">
             <td className="px-4 py-3">{v.ordem}</td>

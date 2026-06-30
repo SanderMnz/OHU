@@ -60,7 +60,7 @@ export default function Professores() {
         <Subtitulo>Cadastrar novo professor</Subtitulo>
         <div className="flex gap-3 flex-wrap">
           <Input placeholder="Nome completo" value={nome} onChange={(e) => setNome(e.target.value)} />
-          <Input placeholder="Nome de usuario (ex: profjoao)" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s/g, ''))} />
+          <Input placeholder="Nome de usuário (ex: profjoao)" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s/g, ''))} />
           <Input placeholder="Senha inicial" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} />
           <Select value={turmaSelecionada} onChange={(e) => setTurmaSelecionada(e.target.value)}>
             <option value="">Turma (opcional)</option>
@@ -75,7 +75,7 @@ export default function Professores() {
 
       <Subtitulo>Professores cadastrados</Subtitulo>
       {professores.length === 0 && <p className="text-gray-400">Nenhum professor cadastrado ainda.</p>}
-      <Tabela cabecalho={['Nome', 'Usuario', 'Turmas', 'Acoes']}>
+      <Tabela cabecalho={['Nome', 'Usuário', 'Turmas', 'Ações']}>
         {professores.map(prof => (
           <tr key={prof.id} className="hover:bg-gray-50">
             <td className="px-4 py-3 font-medium">{prof.nome}</td>

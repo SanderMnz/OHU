@@ -11,15 +11,15 @@ export default function AdminHome() {
         <div className="grid grid-cols-3 gap-6 mt-8">
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <h2 className="text-lg font-semibold text-gray-700">Turmas</h2>
-            <p className="text-gray-400 text-sm mt-1">Gerencie as turmas e periodos</p>
+            <p className="text-gray-400 text-sm mt-1">Gerencie as turmas e períodos</p>
           </div>
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <h2 className="text-lg font-semibold text-gray-700">Alunos</h2>
             <p className="text-gray-400 text-sm mt-1">Cadastre e gerencie alunos</p>
           </div>
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-700">Conteudos</h2>
-            <p className="text-gray-400 text-sm mt-1">Crie e organize os conteudos</p>
+            <h2 className="text-lg font-semibold text-gray-700">Conteúdos</h2>
+            <p className="text-gray-400 text-sm mt-1">Crie e organize os conteúdos</p>
           </div>
         </div>
       </div>

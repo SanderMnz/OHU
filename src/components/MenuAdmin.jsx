@@ -9,7 +9,7 @@ export default function MenuAdmin() {
     { to: '/admin/turmas', label: 'Turmas' },
     { to: '/admin/professores', label: 'Professores' },
     { to: '/admin/alunos', label: 'Alunos' },
-    { to: '/admin/conteudos', label: 'Conteudos' },
+    { to: '/admin/conteudos', label: 'Conteúdos' },
   ]
 
   return (

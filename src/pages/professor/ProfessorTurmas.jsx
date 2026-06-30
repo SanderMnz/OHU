@@ -32,9 +32,9 @@ export default function ProfessorTurmas() {
   return (
     <Layout menu={<MenuProfessor />}>
       <Titulo>Minhas Turmas</Titulo>
-      {turmas.length === 0 && <p className="text-gray-400">Nenhuma turma atribuida ainda.</p>}
+      {turmas.length === 0 && <p className="text-gray-400">Nenhuma turma atribuída ainda.</p>}
 
-      <Tabela cabecalho={['Turma', 'Ano/Serie', 'Periodo Ativo', 'Acoes']}>
+      <Tabela cabecalho={['Turma', 'Ano/Série', 'Período Ativo', 'Ações']}>
         {turmas.map((turma) => (
           <tr key={turma.id} className={turmaSelecionada?.id === turma.id ? 'bg-blue-50' : 'hover:bg-gray-50'}>
             <td className="px-4 py-3 font-medium">{turma.nome}</td>

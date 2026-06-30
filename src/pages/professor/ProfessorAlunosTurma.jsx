@@ -33,7 +33,7 @@ export default function ProfessorAlunosTurma() {
 
       {alunos.length === 0 && <p className="text-gray-400">Nenhum aluno nesta turma ainda.</p>}
 
-      <Tabela cabecalho={['Nome', 'Usuario']}>
+      <Tabela cabecalho={['Nome', 'Usuário']}>
         {alunos.map(a => (
           <tr key={a.id} className="hover:bg-gray-50">
             <td className="px-4 py-3 font-medium">{a.nome}</td>
