@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkMath from 'remark-math'
+import remarkGfm from 'remark-gfm'
 import rehypeKatex from 'rehype-katex'
 import 'katex/dist/katex.min.css'
 import MenuAluno from '../../components/MenuAluno'
@@ -70,7 +71,7 @@ export default function AlunoConteudo() {
       {aba === 'explicacao' && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 prose max-w-none">
           {material?.explicacao
-            ? <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{material.explicacao}</ReactMarkdown>
+            ? <ReactMarkdown remarkPlugins={[remarkMath, remarkGfm]} rehypePlugins={[rehypeKatex]}>{material.explicacao}</ReactMarkdown>
             : <p className="text-gray-400">Nenhuma explicação disponível ainda.</p>}
         </div>
       )}
@@ -78,7 +79,7 @@ export default function AlunoConteudo() {
       {aba === 'exemplos' && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 prose max-w-none">
           {material?.exemplos
-            ? <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{material.exemplos}</ReactMarkdown>
+            ? <ReactMarkdown remarkPlugins={[remarkMath, remarkGfm]} rehypePlugins={[rehypeKatex]}>{material.exemplos}</ReactMarkdown>
             : <p className="text-gray-400">Nenhum exemplo disponível ainda.</p>}
         </div>
       )}
