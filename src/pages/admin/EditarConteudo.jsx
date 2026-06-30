@@ -1,16 +1,15 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import MenuAdmin from '../../components/MenuAdmin'
+import Layout from '../../components/Layout'
+import { Titulo, Subtitulo, Botao, Input, Tabela, Sucesso, Erro } from '../../components/UI'
 import { supabase } from '../../lib/supabase'
 
 async function uploadImagemSupabase(arquivo) {
   const extensao = arquivo.name.split('.').pop()
   const nomeArquivo = `${Date.now()}.${extensao}`
   const { error } = await supabase.storage.from('ImagensOHU').upload(nomeArquivo, arquivo)
-  if (error) {
-    console.log('erro upload:', error)
-    return null
-  }
+  if (error) { console.log('erro upload:', error); return null }
   const { data } = supabase.storage.from('ImagensOHU').getPublicUrl(nomeArquivo)
   return data.publicUrl
 }
@@ -24,14 +23,8 @@ function TextareaComImagem({ value, onChange, rows, placeholder }) {
     const arquivo = e.target.files[0]
     if (!arquivo) return
     setUploadando(true)
-
     const url = await uploadImagemSupabase(arquivo)
-    if (!url) {
-      alert('Erro ao fazer upload')
-      setUploadando(false)
-      return
-    }
-
+    if (!url) { alert('Erro ao fazer upload'); setUploadando(false); return }
     const textarea = ref.current
     const inicio = textarea.selectionStart
     const fim = textarea.selectionEnd
@@ -44,27 +37,16 @@ function TextareaComImagem({ value, onChange, rows, placeholder }) {
 
   return (
     <div>
-      <div style={{ marginBottom: '5px' }}>
-        <button
-          type="button"
-          onClick={() => inputRef.current.click()}
-          disabled={uploadando}
-          style={{ fontSize: '12px' }}
-        >
+      <div className="mb-2">
+        <button type="button" onClick={() => inputRef.current.click()} disabled={uploadando} className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg transition">
           {uploadando ? 'Enviando imagem...' : '📷 Inserir imagem'}
         </button>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleUpload}
-          style={{ display: 'none' }}
-        />
+        <input ref={inputRef} type="file" accept="image/*" onChange={handleUpload} className="hidden" />
       </div>
       <textarea
         ref={ref}
         rows={rows || 10}
-        style={{ width: '100%' }}
+        className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
         placeholder={placeholder}
         value={value}
         onChange={onChange}
@@ -102,10 +84,7 @@ export default function EditarConteudo() {
 
   async function buscarMaterial() {
     const { data } = await supabase.from('conteudo_material').select('*').eq('conteudo_id', id).maybeSingle()
-    if (data) {
-      setExplicacao(data.explicacao || '')
-      setExemplos(data.exemplos || '')
-    }
+    if (data) { setExplicacao(data.explicacao || ''); setExemplos(data.exemplos || '') }
   }
 
   async function buscarVideos() {
@@ -141,8 +120,7 @@ export default function EditarConteudo() {
     const youtubeId = extrairIdYoutube(urlVideo)
     if (!youtubeId) { setMensagem('URL do YouTube invalida'); return }
     await supabase.from('conteudo_videos').insert({ conteudo_id: id, titulo: tituloVideo, url_youtube: youtubeId, ordem: videos.length + 1 })
-    setTituloVideo('')
-    setUrlVideo('')
+    setTituloVideo(''); setUrlVideo('')
     buscarVideos()
   }
 
@@ -164,81 +142,68 @@ export default function EditarConteudo() {
     buscarListas()
   }
 
-  if (!conteudo) return <p>Carregando...</p>
+  if (!conteudo) return <Layout menu={<MenuAdmin />}><p className="text-gray-400">Carregando...</p></Layout>
 
   return (
-    <div style={{ display: 'flex' }}>
-      <MenuAdmin />
-      <div style={{ padding: '20px', maxWidth: '800px' }}>
-        <button onClick={() => navigate('/admin/conteudos')}>Voltar</button>
-        <h1>{conteudo.titulo}</h1>
+    <Layout menu={<MenuAdmin />}>
+      <Botao onClick={() => navigate('/admin/conteudos')} variante="secondary">← Voltar</Botao>
+      <Titulo>{conteudo.titulo}</Titulo>
 
-        <h2>Explicacao</h2>
-        <p style={{ color: 'gray', fontSize: '12px' }}>
-          Para formulas: $x^2 + 2x + 1$ | Para imagens: clique em "Inserir imagem"
-        </p>
-        <TextareaComImagem
-          value={explicacao}
-          onChange={(e) => setExplicacao(e.target.value)}
-          placeholder="Digite a explicacao do conteudo aqui..."
-        />
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <Subtitulo>Explicacao</Subtitulo>
+        <p className="text-gray-400 text-xs mb-2">Para formulas: $x^2 + 2x + 1$ | Para imagens: clique em "Inserir imagem"</p>
+        <TextareaComImagem value={explicacao} onChange={(e) => setExplicacao(e.target.value)} placeholder="Digite a explicacao do conteudo aqui..." />
 
-        <h2>Exemplos resolvidos</h2>
-        <TextareaComImagem
-          value={exemplos}
-          onChange={(e) => setExemplos(e.target.value)}
-          placeholder="Digite os exemplos resolvidos aqui..."
-        />
+        <Subtitulo>Exemplos resolvidos</Subtitulo>
+        <TextareaComImagem value={exemplos} onChange={(e) => setExemplos(e.target.value)} placeholder="Digite os exemplos resolvidos aqui..." />
 
-        <button onClick={salvarMaterial} disabled={salvando}>
-          {salvando ? 'Salvando...' : 'Salvar explicacao e exemplos'}
-        </button>
-        {mensagem && <p style={{ color: mensagem.includes('Erro') || mensagem.includes('invalida') ? 'red' : 'green' }}>{mensagem}</p>}
+        <div className="mt-4">
+          <Botao onClick={salvarMaterial} disabled={salvando}>{salvando ? 'Salvando...' : 'Salvar explicacao e exemplos'}</Botao>
+          {mensagem.includes('Erro') || mensagem.includes('invalida') ? <Erro>{mensagem}</Erro> : <Sucesso>{mensagem}</Sucesso>}
+        </div>
+      </div>
 
-        <hr />
-
-        <h2>Videos</h2>
-        <input placeholder="Titulo do video" value={tituloVideo} onChange={(e) => setTituloVideo(e.target.value)} />
-        <input placeholder="URL do YouTube" value={urlVideo} onChange={(e) => setUrlVideo(e.target.value)} style={{ width: '400px' }} />
-        <button onClick={adicionarVideo}>Adicionar video</button>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <Subtitulo>Videos</Subtitulo>
+        <div className="flex gap-3 flex-wrap mb-4">
+          <Input placeholder="Titulo do video" value={tituloVideo} onChange={(e) => setTituloVideo(e.target.value)} />
+          <Input placeholder="URL do YouTube" value={urlVideo} onChange={(e) => setUrlVideo(e.target.value)} className="w-80" />
+          <Botao onClick={adicionarVideo}>Adicionar video</Botao>
+        </div>
 
         {videos.map((v) => (
-          <div key={v.id} style={{ marginTop: '20px', border: '1px solid #ccc', padding: '10px' }}>
-            <p><strong>{v.titulo}</strong></p>
-            <iframe width="560" height="315" src={`https://www.youtube.com/embed/${v.url_youtube}`} allowFullScreen />
-            <br />
-            <button onClick={() => apagarVideo(v.id)}>Apagar video</button>
+          <div key={v.id} className="border border-gray-200 rounded-lg p-4 mb-3">
+            <p className="font-semibold mb-2">{v.titulo}</p>
+            <iframe width="100%" height="315" src={`https://www.youtube.com/embed/${v.url_youtube}`} allowFullScreen className="rounded-lg" />
+            <div className="mt-2">
+              <Botao onClick={() => apagarVideo(v.id)} variante="danger">Apagar video</Botao>
+            </div>
           </div>
         ))}
-
-        <hr />
-
-        <h2>Listas de exercicios ({listas.length}/5)</h2>
-        <input placeholder="Titulo da lista (ex: Lista 1 - Basico)" value={tituloLista} onChange={(e) => setTituloLista(e.target.value)} />
-        <button onClick={adicionarLista} disabled={listas.length >= 5}>Adicionar lista</button>
-
-        <table border="1" cellPadding="8" style={{ marginTop: '10px' }}>
-          <thead>
-            <tr>
-              <th>Lista</th>
-              <th>Titulo</th>
-              <th>Acoes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {listas.map((l) => (
-              <tr key={l.id}>
-                <td>{l.numero}</td>
-                <td>{l.titulo}</td>
-                <td>
-                  <button onClick={() => navigate(`/admin/conteudos/${id}/lista/${l.id}`)}>Editar questoes</button>
-                  <button onClick={() => apagarLista(l.id)}>Apagar</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
       </div>
-    </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <Subtitulo>Listas de exercicios ({listas.length}/5)</Subtitulo>
+        <div className="flex gap-3 mb-4">
+          <Input placeholder="Titulo da lista (ex: Lista 1 - Basico)" value={tituloLista} onChange={(e) => setTituloLista(e.target.value)} className="w-80" />
+          <Botao onClick={adicionarLista} disabled={listas.length >= 5}>Adicionar lista</Botao>
+        </div>
+
+        <Tabela cabecalho={['Lista', 'Titulo', 'Acoes']}>
+          {listas.map((l) => (
+            <tr key={l.id} className="hover:bg-gray-50">
+              <td className="px-4 py-3">{l.numero}</td>
+              <td className="px-4 py-3 font-medium">{l.titulo}</td>
+              <td className="px-4 py-3">
+                <div className="flex gap-2">
+                  <Botao onClick={() => navigate(`/admin/conteudos/${id}/lista/${l.id}`)} variante="secondary">Editar questoes</Botao>
+                  <Botao onClick={() => apagarLista(l.id)} variante="danger">Apagar</Botao>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </Tabela>
+      </div>
+    </Layout>
   )
 }
