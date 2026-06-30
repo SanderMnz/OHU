@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import MenuProfessor from '../../components/MenuProfessor'
+import Layout from '../../components/Layout'
+import { Titulo, Subtitulo, Tabela } from '../../components/UI'
 import { supabase } from '../../lib/supabase'
 
 export default function ProfessorTurmas() {
@@ -7,26 +9,18 @@ export default function ProfessorTurmas() {
   const [turmaSelecionada, setTurmaSelecionada] = useState(null)
   const [alunos, setAlunos] = useState([])
 
-  useEffect(() => {
-    buscarTurmas()
-  }, [])
+  useEffect(() => { buscarTurmas() }, [])
 
   async function buscarTurmas() {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return
-    const { data } = await supabase
-      .from('turma_professor')
-      .select('turmas(*)')
-      .eq('professor_id', session.user.id)
+    const { data } = await supabase.from('turma_professor').select('turmas(*)').eq('professor_id', session.user.id)
     setTurmas(data?.map(t => t.turmas) || [])
   }
 
   async function selecionarTurma(turma) {
     setTurmaSelecionada(turma)
-    const { data } = await supabase
-      .from('turma_aluno')
-      .select('usuarios(id, nome, username)')
-      .eq('turma_id', turma.id)
+    const { data } = await supabase.from('turma_aluno').select('usuarios(id, nome, username)').eq('turma_id', turma.id)
     setAlunos(data?.map(a => a.usuarios) || [])
   }
 
@@ -36,64 +30,45 @@ export default function ProfessorTurmas() {
   }
 
   return (
-    <div style={{ display: 'flex' }}>
-      <MenuProfessor />
-      <div style={{ padding: '20px' }}>
-        <h1>Minhas Turmas</h1>
+    <Layout menu={<MenuProfessor />}>
+      <Titulo>Minhas Turmas</Titulo>
+      {turmas.length === 0 && <p className="text-gray-400">Nenhuma turma atribuida ainda.</p>}
 
-        {turmas.length === 0 && <p>Nenhuma turma atribuida ainda.</p>}
+      <Tabela cabecalho={['Turma', 'Ano/Serie', 'Periodo Ativo', 'Acoes']}>
+        {turmas.map((turma) => (
+          <tr key={turma.id} className={turmaSelecionada?.id === turma.id ? 'bg-blue-50' : 'hover:bg-gray-50'}>
+            <td className="px-4 py-3 font-medium">{turma.nome}</td>
+            <td className="px-4 py-3">{turma.ano_serie}</td>
+            <td className="px-4 py-3">{labelPeriodo(turma)}</td>
+            <td className="px-4 py-3">
+              <button
+                onClick={() => selecionarTurma(turma)}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition"
+              >
+                {turmaSelecionada?.id === turma.id ? 'Selecionada' : 'Ver alunos'}
+              </button>
+            </td>
+          </tr>
+        ))}
+      </Tabela>
 
-        <table border="1" cellPadding="8">
-          <thead>
-            <tr>
-              <th>Turma</th>
-              <th>Ano/Serie</th>
-              <th>Periodo Ativo</th>
-              <th>Acoes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {turmas.map((turma) => (
-              <tr key={turma.id} style={{ background: turmaSelecionada?.id === turma.id ? '#f0f0f0' : 'white' }}>
-                <td>{turma.nome}</td>
-                <td>{turma.ano_serie}</td>
-                <td>{labelPeriodo(turma)}</td>
-                <td>
-                  <button onClick={() => selecionarTurma(turma)}>
-                    {turmaSelecionada?.id === turma.id ? 'Selecionada' : 'Ver alunos'}
-                  </button>
-                </td>
+      {turmaSelecionada && (
+        <div className="mt-8">
+          <Subtitulo>Alunos da Turma {turmaSelecionada.nome}</Subtitulo>
+          <p className="text-gray-500 mb-4">Total: {alunos.length} alunos</p>
+
+          {alunos.length === 0 && <p className="text-gray-400">Nenhum aluno nesta turma ainda.</p>}
+
+          <Tabela cabecalho={['Nome', 'Usuario']}>
+            {alunos.map(a => (
+              <tr key={a.id} className="hover:bg-gray-50">
+                <td className="px-4 py-3 font-medium">{a.nome}</td>
+                <td className="px-4 py-3 text-gray-500">{a.username}</td>
               </tr>
             ))}
-          </tbody>
-        </table>
-
-        {turmaSelecionada && (
-          <div style={{ marginTop: '30px' }}>
-            <h2>Alunos da Turma {turmaSelecionada.nome}</h2>
-            <p>Total: {alunos.length} alunos</p>
-
-            {alunos.length === 0 && <p>Nenhum aluno nesta turma ainda.</p>}
-
-            <table border="1" cellPadding="8">
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>Usuario</th>
-                </tr>
-              </thead>
-              <tbody>
-                {alunos.map(a => (
-                  <tr key={a.id}>
-                    <td>{a.nome}</td>
-                    <td>{a.username}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </div>
+          </Tabela>
+        </div>
+      )}
+    </Layout>
   )
 }
